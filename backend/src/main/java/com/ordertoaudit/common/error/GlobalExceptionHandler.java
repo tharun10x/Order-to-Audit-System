@@ -44,7 +44,18 @@ public class GlobalExceptionHandler {
         return body(HttpStatus.BAD_REQUEST, "Invalid value for parameter '" + e.getName() + "'", List.of());
     }
 
-    /** Includes InsufficientStockException, whose message names the item and the shortage. */
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorResponse> notFound(NotFoundException e) {
+        return body(HttpStatus.NOT_FOUND, e.getMessage(), List.of());
+    }
+
+    /** One detail line per short item, so the caller sees the whole shortage list. */
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<ErrorResponse> insufficientStock(InsufficientStockException e) {
+        List<String> details = e.getShortages().stream().map(InsufficientStockException.Shortage::describe).toList();
+        return body(HttpStatus.CONFLICT, e.getMessage(), details);
+    }
+
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponse> conflict(ConflictException e) {
         return body(HttpStatus.CONFLICT, e.getMessage(), List.of());

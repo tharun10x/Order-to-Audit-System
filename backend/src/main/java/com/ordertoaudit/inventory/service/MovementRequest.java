@@ -15,6 +15,9 @@ import com.ordertoaudit.masters.entity.AppUser;
  *
  * value is the money value of an inbound movement (for a purchase: the bill amount).
  * It is null for outbound movements, because those are valued by InventoryService at the average cost (R7.4).
+ *
+ * valueIsCostOfEarlierOutbounds is for production output: its value is not known up front, it is the total
+ * value of the outbound movements (the material issues) earlier in the same post() call (R13.6).
  */
 public record MovementRequest(
         Long itemId,
@@ -22,6 +25,7 @@ public record MovementRequest(
         Direction direction,
         BigDecimal qty,
         BigDecimal value,
+        boolean valueIsCostOfEarlierOutbounds,
         SourceType sourceType,
         Long sourceId,
         Instant movementDate,
@@ -31,7 +35,7 @@ public record MovementRequest(
     /** Stock in, with its total value already known (for example the amount on a supplier bill). */
     public static MovementRequest inbound(Long itemId, MovementType type, BigDecimal qty, BigDecimal value,
                                           SourceType sourceType, Long sourceId, Instant date, AppUser user) {
-        return new MovementRequest(itemId, type, Direction.IN, qty, value, sourceType, sourceId, date, null, user);
+        return new MovementRequest(itemId, type, Direction.IN, qty, value, false, sourceType, sourceId, date, null, user);
     }
 
     /** Stock in at a rate per base unit: value = qty x rate, rounded to 2 decimals. */
@@ -41,13 +45,21 @@ public record MovementRequest(
         return inbound(itemId, type, qty, value, sourceType, sourceId, date, user);
     }
 
+    /** Stock in whose value is the total value of the outbound movements before it in the same call. */
+    public static MovementRequest inboundAtCostOfEarlierOutbounds(Long itemId, MovementType type, BigDecimal qty,
+                                                                  SourceType sourceType, Long sourceId, Instant date,
+                                                                  AppUser user) {
+        return new MovementRequest(itemId, type, Direction.IN, qty, null, true, sourceType, sourceId, date, null, user);
+    }
+
     /** Stock out, valued by InventoryService at the current weighted average cost. */
     public static MovementRequest outbound(Long itemId, MovementType type, BigDecimal qty,
                                            SourceType sourceType, Long sourceId, Instant date, AppUser user) {
-        return new MovementRequest(itemId, type, Direction.OUT, qty, null, sourceType, sourceId, date, null, user);
+        return new MovementRequest(itemId, type, Direction.OUT, qty, null, false, sourceType, sourceId, date, null, user);
     }
 
     public MovementRequest withRemarks(String newRemarks) {
-        return new MovementRequest(itemId, type, direction, qty, value, sourceType, sourceId, movementDate, newRemarks, user);
+        return new MovementRequest(itemId, type, direction, qty, value, valueIsCostOfEarlierOutbounds,
+                sourceType, sourceId, movementDate, newRemarks, user);
     }
 }
