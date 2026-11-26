@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: ota-postgres
+    environment:
+      POSTGRES_DB: order_to_audit
+      POSTGRES_USER: ota
+      POSTGRES_PASSWORD: ota
+    ports:
+      - "5432:5432"
+    volumes:
+      - ota-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ota -d order_to_audit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ota-pgdata:
