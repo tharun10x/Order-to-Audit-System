@@ -100,6 +100,12 @@ public class PurchaseService {
         return response;
     }
 
+    /** All recorded bills, newest bill date first. */
+    @Transactional(readOnly = true)
+    public List<PurchaseResponse> list() {
+        return purchaseRepository.findAllByOrderByPurchaseDateDescIdDesc().stream().map(this::toResponse).toList();
+    }
+
     private PurchaseLine buildLine(PurchaseRequest.Line line, Set<String> itemCodesSeen) {
         Item item = itemRepository.findByCode(line.itemCode())
                 .orElseThrow(() -> new BadRequestException("Unknown item '" + line.itemCode() + "'"));

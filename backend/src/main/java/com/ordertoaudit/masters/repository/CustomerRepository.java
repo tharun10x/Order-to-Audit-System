@@ -1,5 +1,6 @@
 package com.ordertoaudit.masters.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,10 @@ import com.ordertoaudit.masters.entity.Customer;
 import jakarta.persistence.LockModeType;
 
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
+
+    List<Customer> findByActiveTrueOrderByNameAsc();
+
+    List<Customer> findBySalesmanIdAndActiveTrueOrderByNameAsc(Long salesmanId);
 
     /** SELECT ... FOR UPDATE: new orders for one customer are created one at a time (R9.7). */
     @Lock(LockModeType.PESSIMISTIC_WRITE)

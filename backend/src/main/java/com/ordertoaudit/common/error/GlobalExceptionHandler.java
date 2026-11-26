@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-/** Turns exceptions into clear 400 (bad input), 403 (not yours), 404 and 409 (conflict with current data) responses. */
+/** Turns exceptions into clear 400 (bad input), 401, 403 (not yours), 404 and 409 (conflict with current data) responses. */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -60,6 +60,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(OrderShortageException.class)
     public ResponseEntity<ErrorResponse> orderShortage(OrderShortageException e) {
         return body(HttpStatus.CONFLICT, e.getMessage(), e.getDetails());
+    }
+
+    /** A failed login, or a user who may no longer act. Token errors are written by JsonSecurityErrors. */
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> unauthorized(UnauthorizedException e) {
+        return body(HttpStatus.UNAUTHORIZED, e.getMessage(), List.of());
     }
 
     @ExceptionHandler(ForbiddenException.class)

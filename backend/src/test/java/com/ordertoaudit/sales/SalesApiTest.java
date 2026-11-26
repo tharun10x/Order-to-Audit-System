@@ -19,11 +19,13 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.jayway.jsonpath.JsonPath;
 import com.ordertoaudit.AbstractSalesTest;
+import com.ordertoaudit.ApiTokens;
 
-/** The sales, billing and payment endpoints and their status codes. Until step 6 every request acts as admin. */
+/** The sales, billing and payment endpoints and their status codes. Requests are made as admin. */
 @AutoConfigureMockMvc
 class SalesApiTest extends AbstractSalesTest {
 
@@ -35,8 +37,13 @@ class SalesApiTest extends AbstractSalesTest {
         produceBenchmarkStock();
     }
 
+    /** Every request carries a real token of the seeded admin user. */
+    private ResultActions perform(MockHttpServletRequestBuilder request) throws Exception {
+        return mvc.perform(request.with(ApiTokens.as(mvc, "admin")));
+    }
+
     private ResultActions postJson(String url, String body) throws Exception {
-        return mvc.perform(post(url).contentType(MediaType.APPLICATION_JSON).content(body));
+        return perform(post(url).contentType(MediaType.APPLICATION_JSON).content(body));
     }
 
     private String orderBody(String customerCode, UUID uuid, int packets) {
@@ -61,14 +68,14 @@ class SalesApiTest extends AbstractSalesTest {
         postJson("/api/orders", orderBody("RET-A", uuid, 150))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value((int) orderId));
-        mvc.perform(get("/api/orders").param("status", "SUBMITTED")).andExpect(jsonPath("$", hasSize(1)));
-        mvc.perform(get("/api/orders/" + orderId + "/stock-check"))
+        perform(get("/api/orders").param("status", "SUBMITTED")).andExpect(jsonPath("$", hasSize(1)));
+        perform(get("/api/orders/" + orderId + "/stock-check"))
                 .andExpect(jsonPath("$.canApprove").value(true))
                 .andExpect(jsonPath("$.lines[0].available").value(238.0));
-        mvc.perform(put("/api/orders/" + orderId + "/lines").contentType(MediaType.APPLICATION_JSON)
+        perform(put("/api/orders/" + orderId + "/lines").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"lines\": [{\"itemCode\": \"MURUKKU200\", \"qty\": 150, \"rate\": 50}]}"))
                 .andExpect(status().isOk());
-        mvc.perform(post("/api/orders/" + orderId + "/approve"))   // no body: approve in full
+        perform(post("/api/orders/" + orderId + "/approve"))   // no body: approve in full
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("APPROVED"));
 
@@ -79,7 +86,7 @@ class SalesApiTest extends AbstractSalesTest {
                 .andExpect(jsonPath("$.total").value(7875.0))
                 .andExpect(jsonPath("$.buyer.name").value("Retailer A")));
 
-        byte[] pdf = mvc.perform(get("/api/invoices/" + invoiceId + "/pdf"))
+        byte[] pdf = perform(get("/api/invoices/" + invoiceId + "/pdf"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_PDF))
                 .andReturn().getResponse().getContentAsByteArray();
@@ -96,10 +103,15 @@ class SalesApiTest extends AbstractSalesTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.allocations[0].outstanding").value(3875.0));
 
-        mvc.perform(get("/api/customers/" + customerId("RET-A") + "/outstanding"))
+        perform(get("/api/customers/" + customerId("RET-A") + "/outstanding"))
                 .andExpect(jsonPath("$.totalOutstanding").value(3875.0));
-        mvc.perform(get("/api/invoices")).andExpect(jsonPath("$", hasSize(1)));
-        mvc.perform(get("/api/invoices/" + invoiceId))
+        perform(get("/api/payments"))
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].amount").value(4000.0))
+                .andExpect(jsonPath("$[0].allocations[0].invoiceNo").value("INV/2026-27/0001"))
+                .andExpect(jsonPath("$[0].allocations[0].paymentStatus").value("PARTIALLY_PAID"));
+        perform(get("/api/invoices")).andExpect(jsonPath("$", hasSize(1)));
+        perform(get("/api/invoices/" + invoiceId))
                 .andExpect(jsonPath("$.paymentStatus").value("PARTIALLY_PAID"));
         postJson("/api/invoices/" + invoiceId + "/cancel", "{\"reason\": \"x\", \"noteDate\": \"2026-11-12\"}")
                 .andExpect(status().isConflict());
@@ -109,7 +121,7 @@ class SalesApiTest extends AbstractSalesTest {
     void aShortageIs409WithADetailLine() throws Exception {
         long orderId = idOf(postJson("/api/orders", orderBody("DIST-B", UUID.randomUUID(), 300)));
 
-        mvc.perform(post("/api/orders/" + orderId + "/approve"))
+        perform(post("/api/orders/" + orderId + "/approve"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.details[0]")
                         .value("MURUKKU200: ordered 300, available 238, short by 62, batches needed 1"));
@@ -117,7 +129,7 @@ class SalesApiTest extends AbstractSalesTest {
                 "{\"lines\": [{\"itemCode\": \"MURUKKU200\", \"approvedQty\": 238}]}")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.lines[0].approvedQty").value(238.0));
-        mvc.perform(post("/api/orders/" + orderId + "/cancel"))
+        perform(post("/api/orders/" + orderId + "/cancel"))
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
     }
 
@@ -148,9 +160,9 @@ class SalesApiTest extends AbstractSalesTest {
                 """.formatted(customerId("RET-A")))
                 .andExpect(status().isBadRequest());
 
-        mvc.perform(get("/api/orders/999999")).andExpect(status().isNotFound());
-        mvc.perform(get("/api/invoices/999999/pdf")).andExpect(status().isNotFound());
-        mvc.perform(get("/api/customers/999999/outstanding")).andExpect(status().isNotFound());
+        perform(get("/api/orders/999999")).andExpect(status().isNotFound());
+        perform(get("/api/invoices/999999/pdf")).andExpect(status().isNotFound());
+        perform(get("/api/customers/999999/outstanding")).andExpect(status().isNotFound());
         postJson("/api/dispatches", "{\"invoiceId\": 999999, \"dispatchDate\": \"2026-11-06\"}")
                 .andExpect(status().isNotFound());
         postJson("/api/invoices", "{\"orderId\": 999999, \"invoiceDate\": \"2026-11-05\"}")

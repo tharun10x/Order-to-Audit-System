@@ -9,4 +9,6 @@ import com.ordertoaudit.masters.entity.ItemUomConversion;
 public interface ItemUomConversionRepository extends JpaRepository<ItemUomConversion, Long> {
 
     Optional<ItemUomConversion> findByItemIdAndUomId(Long itemId, Long uomId);
+
+    Optional<ItemUomConversion> findByItemIdAndUomCode(Long itemId, String uomCode);
 }

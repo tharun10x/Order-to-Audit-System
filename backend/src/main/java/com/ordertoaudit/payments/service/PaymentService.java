@@ -94,6 +94,12 @@ public class PaymentService {
         return response;
     }
 
+    /** All payments, most recently received first. */
+    @Transactional(readOnly = true)
+    public List<PaymentResponse> list() {
+        return paymentRepository.findAllByOrderByReceivedOnDescIdDesc().stream().map(this::toResponse).toList();
+    }
+
     /** R12.4: the sum of the customer's invoice outstanding. A salesman sees only their own customers (R2.2). */
     @Transactional(readOnly = true)
     public CustomerOutstandingResponse customerOutstanding(Long customerId, AppUser user) {
@@ -175,15 +181,24 @@ public class PaymentService {
     }
 
     private PaymentResponse toResponse(Payment payment) {
-        List<PaymentResponse.Allocation> allocations = payment.getAllocations().stream().map(allocation -> {
-            Long invoiceId = allocation.getInvoice().getId();
-            PaidSnapshot now = outstandingOf(invoiceId);
-            return new PaymentResponse.Allocation(invoiceId, allocation.getInvoice().getInvoiceNo(),
-                    allocation.getAmount(), Money.money(now.getOutstanding()),
-                    InvoicePaymentStatus.of(now.getPaid(), now.getOutstanding()));
-        }).toList();
+        List<PaymentResponse.Allocation> allocations = payment.getAllocations().stream()
+                .map(this::toResponse)
+                .toList();
         return new PaymentResponse(payment.getId(), payment.getCustomer().getId(), payment.getReceivedOn(),
                 payment.getAmount(), payment.getMode(), payment.getReference(), payment.getStatus(), allocations);
+    }
+
+    /**
+     * The view has no row for a cancelled invoice (possible only once a payment can be reversed and its invoice
+     * then cancelled, R12.5), so outstanding and status are then null.
+     */
+    private PaymentResponse.Allocation toResponse(PaymentAllocation allocation) {
+        Long invoiceId = allocation.getInvoice().getId();
+        PaidSnapshot now = outstandingRepository.snapshot(invoiceId).orElse(null);
+        return new PaymentResponse.Allocation(invoiceId, allocation.getInvoice().getInvoiceNo(),
+                allocation.getAmount(),
+                now == null ? null : Money.money(now.getOutstanding()),
+                now == null ? null : InvoicePaymentStatus.of(now.getPaid(), now.getOutstanding()));
     }
 
     private Map<String, Object> snapshot(PaymentResponse payment) {

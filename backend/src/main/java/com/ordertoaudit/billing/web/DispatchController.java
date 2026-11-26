@@ -1,6 +1,7 @@
 package com.ordertoaudit.billing.web;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ordertoaudit.billing.service.DispatchService;
 import com.ordertoaudit.security.CurrentUserProvider;
+import com.ordertoaudit.security.Roles;
 
 import jakarta.validation.Valid;
 
@@ -24,6 +26,7 @@ public class DispatchController {
         this.currentUser = currentUser;
     }
 
+    @PreAuthorize(Roles.ADMIN_ONLY)
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public DispatchResponse dispatch(@Valid @RequestBody DispatchRequest request) {

@@ -16,6 +16,8 @@
 	<properties>
 		<java.version>21</java.version>
 		<openhtmltopdf.version>1.1.117</openhtmltopdf.version>
+		<!-- spring-boot:run is for development, so it uses the dev profile. The application itself has no default profile (R2.8) -->
+		<spring-boot.run.profiles>dev</spring-boot.run.profiles>
 		<!-- PostgreSQL rejects the legacy "Asia/Calcutta" zone name that some JVMs report -->
 		<argLine>-Duser.timezone=Asia/Kolkata</argLine>
 	</properties>
@@ -39,6 +41,12 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
+		</dependency>
+		<!-- JWT login (R2): validates bearer tokens, and brings the Nimbus library that signs them.
+		     This is Boot 4's name for the deprecated spring-boot-starter-oauth2-resource-server. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
 		</dependency>
 		<!-- GST invoice PDF (R10.5): Thymeleaf fills an HTML template, openhtmltopdf turns it into a PDF.
 		     io.github.openhtmltopdf is the maintained fork (PDFBox 3). PDFBox comes with it. -->

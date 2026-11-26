@@ -10,12 +10,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.ordertoaudit.masters.entity.Item;
+import com.ordertoaudit.masters.entity.ItemKind;
 
 import jakarta.persistence.LockModeType;
 
 public interface ItemRepository extends JpaRepository<Item, Long> {
 
     Optional<Item> findByCode(String code);
+
+    List<Item> findByKindAndActiveTrueOrderByNameAsc(ItemKind kind);
 
     /**
      * R6.7: locks the item rows (SELECT ... FOR UPDATE). The ORDER BY makes every transaction

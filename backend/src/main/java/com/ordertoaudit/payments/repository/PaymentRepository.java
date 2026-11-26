@@ -1,5 +1,7 @@
 package com.ordertoaudit.payments.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -7,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 import com.ordertoaudit.payments.entity.Payment;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
+
+    List<Payment> findAllByOrderByReceivedOnDescIdDesc();
 
     /** R10.6: an invoice with money from a POSTED payment cannot be cancelled. */
     @Query("""

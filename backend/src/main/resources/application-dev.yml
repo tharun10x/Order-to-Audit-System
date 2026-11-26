@@ -1,3 +1,12 @@
 spring:
   flyway:
     locations: classpath:db/migration,classpath:db/seed
+    # The seed is V1000, so on a dev database created earlier every later migration (V2, V3, ...) has a lower
+    # version than the newest one applied. Flyway refuses that unless out-of-order is allowed. Dev only.
+    out-of-order: true
+
+ota:
+  security:
+    jwt:
+      # dev profile only. This value is public: never use it anywhere real
+      secret: ${JWT_SECRET:dev-only-jwt-secret-never-use-in-production}

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +18,7 @@ import com.ordertoaudit.sales.entity.OrderStatus;
 import com.ordertoaudit.sales.service.CreateOrderResult;
 import com.ordertoaudit.sales.service.SalesOrderService;
 import com.ordertoaudit.security.CurrentUserProvider;
+import com.ordertoaudit.security.Roles;
 
 import jakarta.validation.Valid;
 
@@ -33,43 +35,51 @@ public class SalesOrderController {
     }
 
     /** 201 for a new order, 200 when this clientUuid was already saved (R9.7). */
+    @PreAuthorize(Roles.ORDER_ENTRY)
     @PostMapping
     public ResponseEntity<OrderResponse> create(@Valid @RequestBody CreateOrderRequest request) {
         CreateOrderResult result = orderService.create(request, currentUser.current());
         return ResponseEntity.status(result.created() ? HttpStatus.CREATED : HttpStatus.OK).body(result.order());
     }
 
+    @PreAuthorize(Roles.ORDER_READ)
     @GetMapping
     public List<OrderResponse> list(@RequestParam(required = false) OrderStatus status) {
         return orderService.list(status, currentUser.current());
     }
 
+    @PreAuthorize(Roles.ORDER_READ)
     @GetMapping("/{id}")
     public OrderResponse get(@PathVariable Long id) {
         return orderService.get(id, currentUser.current());
     }
 
+    @PreAuthorize(Roles.ADMIN_ONLY)
     @GetMapping("/{id}/stock-check")
     public StockCheckResponse stockCheck(@PathVariable Long id) {
         return orderService.stockCheck(id, currentUser.current());
     }
 
+    @PreAuthorize(Roles.ADMIN_ONLY)
     @PutMapping("/{id}/lines")
     public OrderResponse updateLines(@PathVariable Long id, @Valid @RequestBody UpdateOrderLinesRequest request) {
         return orderService.updateLines(id, request, currentUser.current());
     }
 
+    @PreAuthorize(Roles.ADMIN_ONLY)
     @PostMapping("/{id}/approve")
     public OrderResponse approve(@PathVariable Long id,
                                  @Valid @RequestBody(required = false) ApproveOrderRequest request) {
         return orderService.approve(id, request, currentUser.current());
     }
 
+    @PreAuthorize(Roles.ADMIN_ONLY)
     @PostMapping("/{id}/reject")
     public OrderResponse reject(@PathVariable Long id, @Valid @RequestBody RejectOrderRequest request) {
         return orderService.reject(id, request.reason(), currentUser.current());
     }
 
+    @PreAuthorize(Roles.ADMIN_ONLY)
     @PostMapping("/{id}/cancel")
     public OrderResponse cancel(@PathVariable Long id) {
         return orderService.cancel(id, currentUser.current());

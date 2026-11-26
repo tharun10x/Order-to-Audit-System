@@ -18,24 +18,30 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.ordertoaudit.common.error.ErrorResponse;
 import com.ordertoaudit.common.error.GlobalExceptionHandler;
 import com.ordertoaudit.common.error.InsufficientStockException;
 
-/** The three endpoints and the 400 / 409 error bodies. */
+/** Purchases and stock endpoints, and the 400 / 409 error bodies. */
 @AutoConfigureMockMvc
 class ApiTest extends AbstractLedgerTest {
 
     @Autowired
     MockMvc mvc;
 
+    /** Every request carries a real token of the seeded admin user. */
+    private ResultActions perform(MockHttpServletRequestBuilder request) throws Exception {
+        return mvc.perform(request.with(ApiTokens.as(mvc, "admin")));
+    }
+
     private ResultActions postPurchase(String billNo, String itemCode, String qty, String uom, String rate) throws Exception {
         String body = """
                 {"supplierId": %d, "purchaseDate": "2026-11-02", "billNo": "%s",
                  "lines": [{"itemCode": "%s", "qty": %s, "uomCode": "%s", "rate": %s}]}
                 """.formatted(supplierId(), billNo, itemCode, qty, uom, rate);
-        return mvc.perform(post("/api/purchases").contentType(MediaType.APPLICATION_JSON).content(body));
+        return perform(post("/api/purchases").contentType(MediaType.APPLICATION_JSON).content(body));
     }
 
     @Test
@@ -48,7 +54,7 @@ class ApiTest extends AbstractLedgerTest {
                 .andExpect(jsonPath("$.lines[0].itemCode").value("FLOUR"))
                 .andExpect(jsonPath("$.lines[0].qty").value(60.0));
 
-        mvc.perform(get("/api/inventory/balances"))
+        perform(get("/api/inventory/balances"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(6)))
                 .andExpect(jsonPath("$[?(@.itemCode=='FLOUR')].qtyOnHand", contains(160.0)))
@@ -56,7 +62,7 @@ class ApiTest extends AbstractLedgerTest {
                 .andExpect(jsonPath("$[?(@.itemCode=='FLOUR')].avgCost", contains(43.125)));
 
         // Whole ledger: the opening row, then the receipt with the running balance
-        mvc.perform(get("/api/inventory/ledger").param("itemCode", "FLOUR"))
+        perform(get("/api/inventory/ledger").param("itemCode", "FLOUR"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].movementType").value("OPENING"))
@@ -66,11 +72,24 @@ class ApiTest extends AbstractLedgerTest {
                 .andExpect(jsonPath("$[1].runningValue").value(6900.0));
 
         // Date filter: only the 2 November movement, but the running balance still includes the opening stock
-        mvc.perform(get("/api/inventory/ledger").param("itemCode", "FLOUR").param("from", "2026-11-02").param("to", "2026-11-02"))
+        perform(get("/api/inventory/ledger").param("itemCode", "FLOUR").param("from", "2026-11-02").param("to", "2026-11-02"))
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].runningQty").value(160.0));
-        mvc.perform(get("/api/inventory/ledger").param("itemCode", "FLOUR").param("from", "2026-11-03"))
+        perform(get("/api/inventory/ledger").param("itemCode", "FLOUR").param("from", "2026-11-03"))
                 .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void recordedPurchasesAreListedNewestFirst() throws Exception {
+        postPurchase("LIST-1", "FLOUR", "1", "kg", "45").andExpect(status().isCreated());
+        postPurchase("LIST-2", "OIL", "1", "L", "140").andExpect(status().isCreated());
+
+        perform(get("/api/purchases"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].billNo").value("LIST-2"))
+                .andExpect(jsonPath("$[0].total").value(140.0))
+                .andExpect(jsonPath("$[1].lines[0].itemCode").value("FLOUR"));
     }
 
     @Test
@@ -79,13 +98,13 @@ class ApiTest extends AbstractLedgerTest {
                 {"supplierId": %d, "purchaseDate": "2026-11-02", "billNo": " ",
                  "lines": [{"itemCode": "FLOUR", "qty": -5, "uomCode": "kg", "rate": 45}]}
                 """.formatted(supplierId());
-        mvc.perform(post("/api/purchases").contentType(MediaType.APPLICATION_JSON).content(body))
+        perform(post("/api/purchases").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("Validation failed"))
                 .andExpect(jsonPath("$.details", hasSize(2)));
 
-        mvc.perform(post("/api/purchases").contentType(MediaType.APPLICATION_JSON).content("{ not json"))
+        perform(post("/api/purchases").contentType(MediaType.APPLICATION_JSON).content("{ not json"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -115,7 +134,7 @@ class ApiTest extends AbstractLedgerTest {
                  "lines": [{"itemCode": "FLOUR", "qty": 1, "uomCode": "kg", "rate": 45},
                            {"itemCode": "FLOUR", "qty": 2, "uomCode": "kg", "rate": 45}]}
                 """.formatted(supplierId());
-        mvc.perform(post("/api/purchases").contentType(MediaType.APPLICATION_JSON).content(body))
+        perform(post("/api/purchases").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value(containsString("more than one line")));
     }
@@ -125,11 +144,11 @@ class ApiTest extends AbstractLedgerTest {
         postPurchase("API-6", "NOPE", "1", "kg", "45").andExpect(status().isBadRequest());
         postPurchase("API-7", "MURUKKU200", "1", "pkt", "45")   // finished goods are not purchased
                 .andExpect(status().isBadRequest());
-        mvc.perform(get("/api/inventory/ledger").param("itemCode", "NOPE")).andExpect(status().isBadRequest());
-        mvc.perform(get("/api/inventory/ledger")).andExpect(status().isBadRequest());
-        mvc.perform(get("/api/inventory/ledger").param("itemCode", "FLOUR").param("from", "not-a-date"))
+        perform(get("/api/inventory/ledger").param("itemCode", "NOPE")).andExpect(status().isBadRequest());
+        perform(get("/api/inventory/ledger")).andExpect(status().isBadRequest());
+        perform(get("/api/inventory/ledger").param("itemCode", "FLOUR").param("from", "not-a-date"))
                 .andExpect(status().isBadRequest());
-        mvc.perform(get("/api/inventory/ledger").param("itemCode", "FLOUR").param("from", "2026-11-05").param("to", "2026-11-01"))
+        perform(get("/api/inventory/ledger").param("itemCode", "FLOUR").param("from", "2026-11-05").param("to", "2026-11-01"))
                 .andExpect(status().isBadRequest());
     }
 

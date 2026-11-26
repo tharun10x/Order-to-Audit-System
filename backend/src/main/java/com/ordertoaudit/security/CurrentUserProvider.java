@@ -1,18 +1,17 @@
 package com.ordertoaudit.security;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 
+import com.ordertoaudit.common.error.UnauthorizedException;
 import com.ordertoaudit.masters.entity.AppUser;
 import com.ordertoaudit.masters.repository.AppUserRepository;
 
-/**
- * TEMPORARY, like DevSecurityConfig: until JWT login exists (roadmap step 6) every request acts as the
- * seeded admin user. Step 6 replaces this with the authenticated principal.
- */
+/** The AppUser behind the current request, loaded by the token's subject (the user id). */
 @Component
 public class CurrentUserProvider {
-
-    private static final String DEV_USERNAME = "admin";
 
     private final AppUserRepository userRepository;
 
@@ -21,7 +20,14 @@ public class CurrentUserProvider {
     }
 
     public AppUser current() {
-        return userRepository.findByUsername(DEV_USERNAME)
-                .orElseThrow(() -> new IllegalStateException("Dev user '" + DEV_USERNAME + "' is missing from app_user"));
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication instanceof JwtAuthenticationToken token)) {
+            throw new UnauthorizedException("Not logged in");
+        }
+        // ActiveUserValidator has already accepted the token, so the subject is a user id.
+        // The user is checked again in case it was deactivated since (R2.4)
+        return userRepository.findById(Long.valueOf(token.getToken().getSubject()))
+                .filter(AppUser::isActive)
+                .orElseThrow(() -> new UnauthorizedException("This user is no longer active"));
     }
 }

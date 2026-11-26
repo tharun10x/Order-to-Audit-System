@@ -18,7 +18,7 @@ public record PaymentResponse(
         PaymentStatus status,
         List<Allocation> allocations) {
 
-    /** outstanding and paymentStatus describe the invoice after this payment. */
+    /** outstanding and paymentStatus describe the invoice as it is now. Both are null if it has been cancelled. */
     public record Allocation(Long invoiceId, String invoiceNo, BigDecimal amount, BigDecimal outstanding,
                              InvoicePaymentStatus paymentStatus) {
     }
