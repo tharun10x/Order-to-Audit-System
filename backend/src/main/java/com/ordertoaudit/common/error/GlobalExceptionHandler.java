@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-/** Turns exceptions into clear 400 (bad input) and 409 (conflict with current data) responses. */
+/** Turns exceptions into clear 400 (bad input), 403 (not yours), 404 and 409 (conflict with current data) responses. */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -54,6 +54,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> insufficientStock(InsufficientStockException e) {
         List<String> details = e.getShortages().stream().map(InsufficientStockException.Shortage::describe).toList();
         return body(HttpStatus.CONFLICT, e.getMessage(), details);
+    }
+
+    /** R9.5: approval blocked. One detail line per short item. */
+    @ExceptionHandler(OrderShortageException.class)
+    public ResponseEntity<ErrorResponse> orderShortage(OrderShortageException e) {
+        return body(HttpStatus.CONFLICT, e.getMessage(), e.getDetails());
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> forbidden(ForbiddenException e) {
+        return body(HttpStatus.FORBIDDEN, e.getMessage(), List.of());
     }
 
     @ExceptionHandler(ConflictException.class)

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<!-- GST tax invoice (R10.5). Must stay well-formed XML: openhtmltopdf requires it. -->
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${invoice.invoiceNo}">Invoice</title>
+    <style>
+        @page { size: A4; margin: 14mm; }
+        body { font-family: 'DejaVu Sans'; font-size: 9pt; color: #111; }
+        h1 { font-size: 14pt; text-align: center; margin: 0 0 8px 0; }
+        table { width: 100%; border-collapse: collapse; }
+        td, th { padding: 4px; vertical-align: top; }
+        .boxed td, .boxed th { border: 1px solid #555; }
+        .boxed th { background-color: #eee; text-align: left; }
+        .boxed th.number { text-align: right; }
+        .number { text-align: right; white-space: nowrap; }
+        .nowrap { white-space: nowrap; }
+        .block { margin-bottom: 10px; }
+        .totals { width: 55%; margin-left: 45%; }
+        .totals td { white-space: nowrap; }
+        .grand td { font-weight: bold; font-size: 10pt; }
+        .cancelled { border: 2px solid #b00; color: #b00; font-weight: bold; font-size: 12pt;
+                     text-align: center; padding: 6px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+<h1>TAX INVOICE</h1>
+
+<div class="cancelled" th:if="${invoice.creditNoteNo != null}"
+     th:text="'CANCELLED — see ' + ${invoice.creditNoteNo}">CANCELLED</div>
+
+<table class="boxed block">
+    <tr>
+        <td style="width: 50%">
+            <strong th:text="${invoice.sellerName}">Seller</strong><br/>
+            <span th:if="${invoice.sellerAddress != null}" th:text="${invoice.sellerAddress}">Address</span><br/>
+            GSTIN: <span th:text="${invoice.sellerGstin}">GSTIN</span><br/>
+            State: <span th:text="${invoice.sellerState}">State</span>
+        </td>
+        <td>
+            Invoice no: <strong th:text="${invoice.invoiceNo}">INV</strong><br/>
+            Invoice date: <span th:text="${invoice.invoiceDate}">Date</span>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            Bill to:<br/>
+            <strong th:text="${invoice.buyerName}">Buyer</strong><br/>
+            <span th:if="${invoice.buyerAddress != null}" th:text="${invoice.buyerAddress}">Address</span><br/>
+            GSTIN: <span th:text="${invoice.buyerGstin}">GSTIN</span><br/>
+            Place of supply: <span th:text="${invoice.placeOfSupply}">State</span>
+        </td>
+    </tr>
+</table>
+
+<table class="boxed block">
+    <thead>
+    <tr>
+        <th>Item</th>
+        <th>HSN</th>
+        <th class="number">Qty (pkt)</th>
+        <th class="number">Rate</th>
+        <th class="number">Taxable</th>
+        <th class="number">GST %</th>
+        <th class="number" th:if="${invoice.intra}">CGST</th>
+        <th class="number" th:if="${invoice.intra}">SGST</th>
+        <th class="number" th:unless="${invoice.intra}">IGST</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="line : ${invoice.lines}">
+        <td th:text="${line.itemName}">Item</td>
+        <td class="nowrap" th:text="${line.hsnCode}">HSN</td>
+        <td class="number" th:text="${line.qty}">0</td>
+        <td class="number" th:text="${line.rate}">0.00</td>
+        <td class="number" th:text="${line.taxableValue}">0.00</td>
+        <td class="number" th:text="${line.gstRate}">0%</td>
+        <td class="number" th:if="${invoice.intra}" th:text="${line.cgst}">0.00</td>
+        <td class="number" th:if="${invoice.intra}" th:text="${line.sgst}">0.00</td>
+        <td class="number" th:unless="${invoice.intra}" th:text="${line.igst}">0.00</td>
+    </tr>
+    </tbody>
+</table>
+
+<table class="boxed block totals">
+    <tr>
+        <td>Taxable value</td>
+        <td class="number" th:text="${invoice.taxableValue}">0.00</td>
+    </tr>
+    <tr th:if="${invoice.intra}">
+        <td>CGST</td>
+        <td class="number" th:text="${invoice.cgst}">0.00</td>
+    </tr>
+    <tr th:if="${invoice.intra}">
+        <td>SGST</td>
+        <td class="number" th:text="${invoice.sgst}">0.00</td>
+    </tr>
+    <tr th:unless="${invoice.intra}">
+        <td>IGST</td>
+        <td class="number" th:text="${invoice.igst}">0.00</td>
+    </tr>
+    <tr class="grand">
+        <td>Total</td>
+        <td class="number" th:text="'₹ ' + ${invoice.total}">0.00</td>
+    </tr>
+</table>
+
+<p>Amount in words: <strong th:text="${invoice.amountInWords}">Words</strong></p>
+
+<p style="text-align: right; margin-top: 40px">
+    For <span th:text="${invoice.sellerName}">Seller</span><br/><br/><br/>
+    Authorised signatory
+</p>
+</body>
+</html>

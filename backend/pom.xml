@@ -15,6 +15,7 @@
 	<description>Order-to-Audit system for a small food manufacturer</description>
 	<properties>
 		<java.version>21</java.version>
+		<openhtmltopdf.version>1.1.117</openhtmltopdf.version>
 		<!-- PostgreSQL rejects the legacy "Asia/Calcutta" zone name that some JVMs report -->
 		<argLine>-Duser.timezone=Asia/Kolkata</argLine>
 	</properties>
@@ -38,6 +39,17 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
+		</dependency>
+		<!-- GST invoice PDF (R10.5): Thymeleaf fills an HTML template, openhtmltopdf turns it into a PDF.
+		     io.github.openhtmltopdf is the maintained fork (PDFBox 3). PDFBox comes with it. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.github.openhtmltopdf</groupId>
+			<artifactId>openhtmltopdf-pdfbox</artifactId>
+			<version>${openhtmltopdf.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.flywaydb</groupId>

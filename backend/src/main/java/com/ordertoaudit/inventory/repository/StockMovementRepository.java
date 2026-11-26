@@ -20,6 +20,10 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
             order by m.movementDate asc, m.id asc""")
     List<StockMovement> findLedger(@Param("itemId") Long itemId, @Param("from") Instant from, @Param("to") Instant to);
 
+    /** The movements one document posted, for example the SALE rows of a dispatch (to return them, R10.7). */
+    List<StockMovement> findBySourceTypeAndSourceIdAndMovementTypeOrderByIdAsc(SourceType sourceType, Long sourceId,
+                                                                               MovementType movementType);
+
     /** Total value per item of the movements one document caused (used for the run cost report). */
     @Query("""
             select m.item.id as itemId, sum(m.valueAmount) as total from StockMovement m

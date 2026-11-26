@@ -44,7 +44,7 @@ class SchemaAndSeedTest extends AbstractIntegrationTest {
         assertThat(count("supplier")).isEqualTo(1);
         assertThat(count("bom")).isEqualTo(1);
         assertThat(count("bom_line")).isEqualTo(5);
-        assertThat(count("invoice_sequence")).isEqualTo(3);   // INVOICE, CREDIT_NOTE (seed) and PRODUCTION_RUN (V2)
+        assertThat(count("invoice_sequence")).isEqualTo(5);   // INVOICE, CREDIT_NOTE (seed), PRODUCTION_RUN (V2), SALES_ORDER and DISPATCH (V3)
         assertThat(count("stock_movement")).isEqualTo(6);
     }
 
@@ -235,14 +235,16 @@ class SchemaAndSeedTest extends AbstractIntegrationTest {
 
     @Test
     void invoiceSequenceIsOneRowPerDocTypePerFinancialYear() {
-        // 2026-27 already has INVOICE and CREDIT_NOTE (seed) and PRODUCTION_RUN (V2): one row per doc_type...
+        // 2026-27 already has the two seed rows plus those added by V2 and V3: one row per doc_type...
         assertThat(jdbc.queryForObject(
-                "SELECT count(*) FROM invoice_sequence WHERE financial_year = '2026-27'", Integer.class)).isEqualTo(3);
+                "SELECT count(*) FROM invoice_sequence WHERE financial_year = '2026-27'", Integer.class)).isEqualTo(5);
+        assertThat(jdbc.queryForList("SELECT prefix FROM invoice_sequence WHERE doc_type IN ('SALES_ORDER', 'DISPATCH') "
+                + "ORDER BY doc_type", String.class)).containsExactly("DC", "SO");
         assertThat(jdbc.queryForObject(
                 "SELECT prefix FROM invoice_sequence WHERE doc_type = 'PRODUCTION_RUN'", String.class)).isEqualTo("RUN");
-        // The doc_type list was widened by V2, but only to the three real document types
+        // The doc_type list was widened by V2 and V3, but only to the real document types
         assertRejected("invoice_sequence_doc_type_check",
-                () -> jdbc.update("INSERT INTO invoice_sequence (doc_type, financial_year, prefix) VALUES ('DISPATCH', '2026-27', 'DSP')"));
+                () -> jdbc.update("INSERT INTO invoice_sequence (doc_type, financial_year, prefix) VALUES ('QUOTATION', '2026-27', 'QT')"));
         // ...but the same (doc_type, financial_year) twice does not.
         assertRejected("invoice_sequence_pkey",
                 () -> jdbc.update("INSERT INTO invoice_sequence (doc_type, financial_year, prefix) VALUES ('INVOICE', '2026-27', 'INV')"));
@@ -601,9 +603,11 @@ class SchemaAndSeedTest extends AbstractIntegrationTest {
         boolean intra = supplyType.equals("INTRA");
         return jdbc.queryForObject("""
                 INSERT INTO invoice (invoice_no, financial_year, invoice_date, customer_id, place_of_supply, supply_type,
-                                     taxable_value, cgst, sgst, igst, total, created_by)
+                                     taxable_value, cgst, sgst, igst, total, created_by,
+                                     seller_name, seller_gstin, seller_state_code, buyer_name)
                 VALUES ('INV/TEST/' || nextval('invoice_id_seq'), '2026-27', current_date,
-                        (SELECT id FROM customer WHERE code = 'RET-A'), ?, ?, 100.00, ?, ?, ?, 105.00, ?)
+                        (SELECT id FROM customer WHERE code = 'RET-A'), ?, ?, 100.00, ?, ?, ?, 105.00, ?,
+                        'Test seller', '33AAACO1234A1Z5', '33', 'Test buyer')
                 RETURNING id""", Long.class,
                 placeOfSupply, supplyType,
                 new BigDecimal(intra ? "2.50" : "0.00"), new BigDecimal(intra ? "2.50" : "0.00"),
@@ -612,8 +616,8 @@ class SchemaAndSeedTest extends AbstractIntegrationTest {
 
     private void insertInvoiceLine(long invoiceId) {
         jdbc.update("""
-                INSERT INTO invoice_line (invoice_id, item_id, hsn_code, qty, rate, taxable_value, gst_rate)
-                VALUES (?, (SELECT id FROM item WHERE code = 'MURUKKU200'), '21069099', 2, 50.00, 100.00, 5.00)""", invoiceId);
+                INSERT INTO invoice_line (invoice_id, item_id, item_name, hsn_code, qty, rate, taxable_value, gst_rate)
+                VALUES (?, (SELECT id FROM item WHERE code = 'MURUKKU200'), 'Murukku 200 g', '21069099', 2, 50.00, 100.00, 5.00)""", invoiceId);
     }
 
     private long insertDispatch(long invoiceId) {

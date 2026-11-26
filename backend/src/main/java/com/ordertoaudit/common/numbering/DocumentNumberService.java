@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Issues document numbers like INV/2026-27/0001, CN/2026-27/0001 and RUN/2026-27/0001 (R10.2, R8).
+ * Issues document numbers like INV/, CN/, RUN/, SO/ and DC/2026-27/0001 (R8.10, R9.8, R10.2, R11.5).
  *
  * The number comes from a counter row that is locked FOR UPDATE inside the caller's transaction.
  * If that transaction rolls back, the counter rolls back with it, so numbers have no gaps

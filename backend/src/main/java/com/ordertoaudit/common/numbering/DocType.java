@@ -4,7 +4,9 @@ package com.ordertoaudit.common.numbering;
 public enum DocType {
     INVOICE("INV"),
     CREDIT_NOTE("CN"),
-    PRODUCTION_RUN("RUN");
+    PRODUCTION_RUN("RUN"),
+    SALES_ORDER("SO"),
+    DISPATCH("DC");
 
     private final String prefix;
 
