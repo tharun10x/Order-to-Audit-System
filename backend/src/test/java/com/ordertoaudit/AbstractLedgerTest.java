@@ -1,0 +1,92 @@
+package com.ordertoaudit;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import com.ordertoaudit.common.Money;
+import com.ordertoaudit.inventory.entity.MovementType;
+import com.ordertoaudit.inventory.entity.SourceType;
+import com.ordertoaudit.inventory.entity.StockMovement;
+import com.ordertoaudit.inventory.service.InventoryService;
+import com.ordertoaudit.inventory.service.MovementRequest;
+import com.ordertoaudit.masters.entity.AppUser;
+import com.ordertoaudit.masters.repository.AppUserRepository;
+
+/**
+ * Base for tests that post real transactions (they COMMIT, because the concurrency test needs that).
+ * To keep the seed intact for other test classes, everything created by a test is deleted before and
+ * after it: purchases, audit rows and every movement except the OPENING rows from the seed.
+ */
+public abstract class AbstractLedgerTest extends AbstractIntegrationTest {
+
+    protected static final LocalDate PURCHASE_DAY = LocalDate.of(2026, 11, 2);
+    protected static final Instant PURCHASE_INSTANT = PURCHASE_DAY.atStartOfDay(Money.ZONE).toInstant();
+
+    @Autowired
+    protected JdbcTemplate jdbc;
+
+    @Autowired
+    protected TransactionTemplate tx;
+
+    @Autowired
+    protected InventoryService inventoryService;
+
+    @Autowired
+    private AppUserRepository userRepository;
+
+    @BeforeEach
+    @AfterEach
+    void removeEverythingExceptTheSeed() {
+        jdbc.update("DELETE FROM audit_log");
+        jdbc.update("DELETE FROM purchase_line");
+        jdbc.update("DELETE FROM purchase");
+        jdbc.update("DELETE FROM stock_movement WHERE source_type <> 'OPENING'");
+    }
+
+    protected AppUser admin() {
+        return userRepository.findByUsername("admin").orElseThrow();
+    }
+
+    protected Long itemId(String code) {
+        return jdbc.queryForObject("SELECT id FROM item WHERE code = ?", Long.class, code);
+    }
+
+    protected Long supplierId() {
+        return jdbc.queryForObject("SELECT id FROM supplier LIMIT 1", Long.class);
+    }
+
+    protected BigDecimal qtyOnHand(String code) {
+        return jdbc.queryForObject("SELECT qty_on_hand FROM stock_balance WHERE code = ?", BigDecimal.class, code);
+    }
+
+    protected BigDecimal stockValue(String code) {
+        return jdbc.queryForObject("SELECT stock_value FROM stock_balance WHERE code = ?", BigDecimal.class, code);
+    }
+
+    protected int movementCount() {
+        return jdbc.queryForObject("SELECT count(*) FROM stock_movement", Integer.class);
+    }
+
+    protected MovementRequest receipt(String code, String qty, String value, long sourceId) {
+        return MovementRequest.inbound(itemId(code), MovementType.RECEIPT, new BigDecimal(qty), new BigDecimal(value),
+                SourceType.PURCHASE, sourceId, PURCHASE_INSTANT, admin());
+    }
+
+    protected MovementRequest issue(String code, String qty, long sourceId) {
+        return MovementRequest.outbound(itemId(code), MovementType.ISSUE, new BigDecimal(qty),
+                SourceType.PRODUCTION_RUN, sourceId, PURCHASE_INSTANT, admin());
+    }
+
+    /** Posts the movements the way a posting service would: inside one transaction. */
+    protected List<StockMovement> postMovements(MovementRequest... requests) {
+        return tx.execute(status -> inventoryService.post(List.of(requests)));
+    }
+}

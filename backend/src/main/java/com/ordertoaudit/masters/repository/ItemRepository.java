@@ -1,0 +1,27 @@
+package com.ordertoaudit.masters.repository;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import com.ordertoaudit.masters.entity.Item;
+
+import jakarta.persistence.LockModeType;
+
+public interface ItemRepository extends JpaRepository<Item, Long> {
+
+    Optional<Item> findByCode(String code);
+
+    /**
+     * R6.7: locks the item rows (SELECT ... FOR UPDATE). The ORDER BY makes every transaction
+     * take the locks in ascending id order, so two transactions cannot deadlock on each other.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select i from Item i where i.id in :ids order by i.id asc")
+    List<Item> lockAllByIdOrderById(@Param("ids") Collection<Long> ids);
+}
