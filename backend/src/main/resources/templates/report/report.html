@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<!-- Every report (R15), landscape A4. Must stay well-formed XML: openhtmltopdf requires it. -->
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${report.title}">Report</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 12mm 10mm 14mm 10mm;
+            @bottom-right { content: "Page " counter(page) " of " counter(pages);
+                            font-family: 'DejaVu Sans'; font-size: 7pt; color: #555; }
+        }
+        body { font-family: 'DejaVu Sans'; font-size: 7.5pt; color: #111; }
+        .company { font-size: 11pt; font-weight: bold; }
+        h1 { font-size: 13pt; margin: 2px 0 2px 0; }
+        .meta { color: #444; margin-bottom: 8px; }
+        h2 { font-size: 9.5pt; margin: 12px 0 4px 0; }
+        table { width: 100%; border-collapse: collapse; -fs-table-paginate: paginate; }
+        thead { display: table-header-group; }
+        tr { page-break-inside: avoid; }
+        th, td { border: 0.5px solid #888; padding: 2px 3px; vertical-align: top; }
+        th { background-color: #eee; text-align: left; }
+        .number { text-align: right; white-space: nowrap; }
+        .totals td { font-weight: bold; background-color: #f6f6f6; }
+        .empty { color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+<div class="company" th:text="${report.companyName}">Company</div>
+<h1 th:text="${report.title}">Title</h1>
+<div class="meta">
+    Period: <span th:text="${report.periodLabel}">Period</span>
+    <span th:if="${report.subject != null}"> · Item: <span th:text="${report.subject}">Item</span></span>
+    · Generated <span th:text="${report.generated}">at by</span>
+</div>
+
+<th:block th:each="section : ${report.sections}">
+    <h2 th:text="${section.title}">Section</h2>
+    <p class="empty" th:if="${#lists.isEmpty(section.rows) and section.totals == null}">Nothing in this period.</p>
+    <table th:unless="${#lists.isEmpty(section.rows) and section.totals == null}">
+        <thead>
+        <tr>
+            <th th:each="header, i : ${section.headers}" th:text="${header}"
+                th:classappend="${section.numeric[i.index]} ? 'number'">Header</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="row : ${section.rows}">
+            <td th:each="cell, i : ${row}" th:text="${cell}"
+                th:classappend="${section.numeric[i.index]} ? 'number'">Cell</td>
+        </tr>
+        <tr class="totals" th:if="${section.totals != null}">
+            <td th:each="cell, i : ${section.totals}" th:text="${cell}"
+                th:classappend="${section.numeric[i.index]} ? 'number'">Total</td>
+        </tr>
+        </tbody>
+    </table>
+</th:block>
+</body>
+</html>

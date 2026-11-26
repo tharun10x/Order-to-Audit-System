@@ -24,3 +24,6 @@ ota:
       secret: ${JWT_SECRET:}          # required, at least 32 bytes. Only dev and test have a default
       expiry: ${JWT_EXPIRY:8h}
     cors-allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}   # the Vite dev server
+  # Business date (F1): unset = today. A date such as 2026-11-28 pins "today" at 10:00 IST, for demos
+  clock:
+    fixed-date: ${OTA_BUSINESS_DATE:}

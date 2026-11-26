@@ -7,3 +7,6 @@ ota:
     jwt:
       # test profile only. This value is public: never use it anywhere real
       secret: ${JWT_SECRET:test-only-jwt-secret-never-use-in-production}
+  # Tests always run "on" 28 November 2026, inside the benchmark month (F1)
+  clock:
+    fixed-date: 2026-11-28

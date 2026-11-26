@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.ordertoaudit.production.entity.ProductionRun;
+import com.ordertoaudit.production.entity.RunStatus;
 
 import jakarta.persistence.LockModeType;
 
@@ -21,4 +22,10 @@ public interface ProductionRunRepository extends JpaRepository<ProductionRun, Lo
     Optional<ProductionRun> lockById(@Param("id") Long id);
 
     List<ProductionRun> findByRunDateBetweenOrderByRunDateAscIdAsc(LocalDate from, LocalDate to);
+
+    List<ProductionRun> findByStatusAndRunDateBetweenOrderByRunDateAscIdAsc(RunStatus status, LocalDate from,
+                                                                            LocalDate to);
+
+    /** Newest first, for "the latest run of each product". */
+    List<ProductionRun> findByStatusOrderByRunDateDescIdDesc(RunStatus status);
 }

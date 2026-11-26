@@ -1,6 +1,7 @@
 package com.ordertoaudit.sales.service;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -58,11 +59,12 @@ public class SalesOrderService {
     private final DocumentNumberService documentNumberService;
     private final StockCheckService stockCheckService;
     private final AuditService auditService;
+    private final Clock businessClock;
 
     public SalesOrderService(SalesOrderRepository orderRepository, CustomerRepository customerRepository,
                              ItemRepository itemRepository, UnitConversionService unitConversionService,
                              DocumentNumberService documentNumberService, StockCheckService stockCheckService,
-                             AuditService auditService) {
+                             AuditService auditService, Clock businessClock) {
         this.orderRepository = orderRepository;
         this.customerRepository = customerRepository;
         this.itemRepository = itemRepository;
@@ -70,6 +72,7 @@ public class SalesOrderService {
         this.documentNumberService = documentNumberService;
         this.stockCheckService = stockCheckService;
         this.auditService = auditService;
+        this.businessClock = businessClock;
     }
 
     /** R9.1, R9.2, R9.7. The customer row lock makes two simultaneous re-sends wait for each other. */
@@ -95,7 +98,7 @@ public class SalesOrderService {
             throw new BadRequestException("Customer " + customer.getName() + " has no salesman assigned");
         }
 
-        LocalDate today = LocalDate.now(Money.ZONE);
+        LocalDate today = LocalDate.now(businessClock);   // the business date (ClockConfig)
         SalesOrder order = new SalesOrder();
         order.setClientUuid(request.clientUuid());
         order.setCustomer(customer);

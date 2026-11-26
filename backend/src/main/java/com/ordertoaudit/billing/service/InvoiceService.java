@@ -1,6 +1,7 @@
 package com.ordertoaudit.billing.service;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -66,13 +67,15 @@ public class InvoiceService {
     private final InventoryService inventoryService;
     private final DocumentNumberService documentNumberService;
     private final AuditService auditService;
+    private final Clock businessClock;
 
     public InvoiceService(InvoiceRepository invoiceRepository, CreditNoteRepository creditNoteRepository,
                           DispatchRepository dispatchRepository, SalesOrderRepository orderRepository,
                           CompanyRepository companyRepository, PaymentRepository paymentRepository,
                           InvoiceOutstandingRepository outstandingRepository,
                           StockMovementRepository movementRepository, InventoryService inventoryService,
-                          DocumentNumberService documentNumberService, AuditService auditService) {
+                          DocumentNumberService documentNumberService, AuditService auditService,
+                          Clock businessClock) {
         this.invoiceRepository = invoiceRepository;
         this.creditNoteRepository = creditNoteRepository;
         this.dispatchRepository = dispatchRepository;
@@ -84,6 +87,7 @@ public class InvoiceService {
         this.inventoryService = inventoryService;
         this.documentNumberService = documentNumberService;
         this.auditService = auditService;
+        this.businessClock = businessClock;
     }
 
     /** R10.1 to R10.5: one invoice for the whole APPROVED order, for the approved quantities. */
@@ -150,7 +154,7 @@ public class InvoiceService {
                     + " has payments. They must be reversed before it can be cancelled");
         }
         Dispatch dispatch = dispatchRepository.findByInvoiceId(invoiceId).orElse(null);
-        LocalDate date = noteDate != null ? noteDate : LocalDate.now(Money.ZONE);
+        LocalDate date = noteDate != null ? noteDate : LocalDate.now(businessClock);
         requireNotBefore(date, invoice.getInvoiceDate(), "the invoice date");
         if (dispatch != null) {
             requireNotBefore(date, dispatch.getDispatchDate(), "the dispatch date");

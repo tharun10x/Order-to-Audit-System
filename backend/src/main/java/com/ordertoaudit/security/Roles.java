@@ -26,8 +26,16 @@ public final class Roles {
     /** Raw-material receipts (R7). */
     public static final String PURCHASE_ENTRY = "hasAnyRole('ADMIN', 'PRODUCTION')";
 
-    /** Purchases, production runs and stock. */
+    /** Purchases, production runs and stock, including the stock and production reports (F2). */
     public static final String OPERATIONS_READ = "hasAnyRole('ADMIN', 'PRODUCTION', 'AUDITOR', 'OWNER')";
+
+    /** The accounts reports (R15): sales, GST, purchases, collections, outstanding. */
+    public static final String REPORTS_READ = "hasAnyRole('ADMIN', 'AUDITOR', 'OWNER')";
+
+    /** A salesman's own customer-wise sales (brief 4.1). */
+    public static final String SALESMAN_ONLY = "hasRole('SALESMAN')";
+
+    public static final String DASHBOARD = "hasAnyRole('OWNER', 'ADMIN')";
 
     private Roles() {
     }

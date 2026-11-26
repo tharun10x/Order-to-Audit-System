@@ -54,6 +54,10 @@ class RoleMatrixTest extends AbstractLedgerTest {
     private static final Set<UserRole> OPERATIONS_READ =
             Set.of(UserRole.ADMIN, UserRole.PRODUCTION, UserRole.AUDITOR, UserRole.OWNER);
 
+    private static final Set<UserRole> REPORTS = Set.of(UserRole.ADMIN, UserRole.AUDITOR, UserRole.OWNER);
+    private static final Set<UserRole> SALESMAN = Set.of(UserRole.SALESMAN);
+    private static final Set<UserRole> DASHBOARD = Set.of(UserRole.OWNER, UserRole.ADMIN);
+
     private static final Map<UserRole, String> USERNAMES = Map.of(
             UserRole.SALESMAN, "salesman_a", UserRole.ADMIN, "admin", UserRole.PRODUCTION, "production",
             UserRole.AUDITOR, "auditor", UserRole.OWNER, "owner");
@@ -129,7 +133,20 @@ class RoleMatrixTest extends AbstractLedgerTest {
 
                 get("/api/inventory/balances", 200, OPERATIONS_READ),
                 new Endpoint("GET", "/api/inventory/ledger", "/api/inventory/ledger?itemCode=NOPE", null, 400,
-                        OPERATIONS_READ));
+                        OPERATIONS_READ),
+
+                // Reports (R15) and the dashboard. Stock and production reports follow stock access (F2)
+                get("/api/reports/sales-register", 200, REPORTS),
+                get("/api/reports/gst-summary", 200, REPORTS),
+                get("/api/reports/purchase-register", 200, REPORTS),
+                get("/api/reports/stock-summary", 200, OPERATIONS_READ),
+                new Endpoint("GET", "/api/reports/stock-ledger", "/api/reports/stock-ledger?itemCode=NOPE", null, 400,
+                        OPERATIONS_READ),
+                get("/api/reports/production-report", 200, OPERATIONS_READ),
+                get("/api/reports/collections", 200, REPORTS),
+                get("/api/reports/outstanding", 200, REPORTS),
+                get("/api/reports/my-sales", 200, SALESMAN),
+                get("/api/dashboard", 200, DASHBOARD));
     }
 
     static Stream<Arguments> everyEndpointForEveryRole() {

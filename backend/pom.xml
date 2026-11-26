@@ -16,6 +16,8 @@
 	<properties>
 		<java.version>21</java.version>
 		<openhtmltopdf.version>1.1.117</openhtmltopdf.version>
+		<poi.version>6.0.0</poi.version>
+		<commons-csv.version>1.14.1</commons-csv.version>
 		<!-- spring-boot:run is for development, so it uses the dev profile. The application itself has no default profile (R2.8) -->
 		<spring-boot.run.profiles>dev</spring-boot.run.profiles>
 		<!-- PostgreSQL rejects the legacy "Asia/Calcutta" zone name that some JVMs report -->
@@ -59,6 +61,12 @@
 			<artifactId>openhtmltopdf-pdfbox</artifactId>
 			<version>${openhtmltopdf.version}</version>
 		</dependency>
+		<!-- Report export to Excel (R15): real .xlsx files with numeric cells. Boot does not manage its version -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>${poi.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-postgresql</artifactId>
@@ -98,6 +106,13 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- Tests read the CSV exports with an independent parser, not with our own writer's rules -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-csv</artifactId>
+			<version>${commons-csv.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
