@@ -44,7 +44,7 @@ class SchemaAndSeedTest extends AbstractIntegrationTest {
         assertThat(count("supplier")).isEqualTo(1);
         assertThat(count("bom")).isEqualTo(1);
         assertThat(count("bom_line")).isEqualTo(5);
-        assertThat(count("invoice_sequence")).isEqualTo(2);
+        assertThat(count("invoice_sequence")).isEqualTo(3);   // INVOICE, CREDIT_NOTE (seed) and PRODUCTION_RUN (V2)
         assertThat(count("stock_movement")).isEqualTo(6);
     }
 
@@ -235,9 +235,14 @@ class SchemaAndSeedTest extends AbstractIntegrationTest {
 
     @Test
     void invoiceSequenceIsOneRowPerDocTypePerFinancialYear() {
-        // Seed already has INVOICE and CREDIT_NOTE for 2026-27, so the same year with another doc_type works...
+        // 2026-27 already has INVOICE and CREDIT_NOTE (seed) and PRODUCTION_RUN (V2): one row per doc_type...
         assertThat(jdbc.queryForObject(
-                "SELECT count(*) FROM invoice_sequence WHERE financial_year = '2026-27'", Integer.class)).isEqualTo(2);
+                "SELECT count(*) FROM invoice_sequence WHERE financial_year = '2026-27'", Integer.class)).isEqualTo(3);
+        assertThat(jdbc.queryForObject(
+                "SELECT prefix FROM invoice_sequence WHERE doc_type = 'PRODUCTION_RUN'", String.class)).isEqualTo("RUN");
+        // The doc_type list was widened by V2, but only to the three real document types
+        assertRejected("invoice_sequence_doc_type_check",
+                () -> jdbc.update("INSERT INTO invoice_sequence (doc_type, financial_year, prefix) VALUES ('DISPATCH', '2026-27', 'DSP')"));
         // ...but the same (doc_type, financial_year) twice does not.
         assertRejected("invoice_sequence_pkey",
                 () -> jdbc.update("INSERT INTO invoice_sequence (doc_type, financial_year, prefix) VALUES ('INVOICE', '2026-27', 'INV')"));

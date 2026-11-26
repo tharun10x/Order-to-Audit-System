@@ -23,7 +23,8 @@ import com.ordertoaudit.masters.repository.AppUserRepository;
 /**
  * Base for tests that post real transactions (they COMMIT, because the concurrency test needs that).
  * To keep the seed intact for other test classes, everything created by a test is deleted before and
- * after it: purchases, audit rows and every movement except the OPENING rows from the seed.
+ * after it: purchases, production runs, audit rows, every movement except the OPENING rows from the seed,
+ * and the document counters.
  */
 public abstract class AbstractLedgerTest extends AbstractIntegrationTest {
 
@@ -46,9 +47,15 @@ public abstract class AbstractLedgerTest extends AbstractIntegrationTest {
     @AfterEach
     void removeEverythingExceptTheSeed() {
         jdbc.update("DELETE FROM audit_log");
+        jdbc.update("DELETE FROM overhead_entry");
+        jdbc.update("DELETE FROM production_consumption");
+        jdbc.update("DELETE FROM production_run");
         jdbc.update("DELETE FROM purchase_line");
         jdbc.update("DELETE FROM purchase");
         jdbc.update("DELETE FROM stock_movement WHERE source_type <> 'OPENING'");
+        // Document counters go back to the seed state: only 2026-27 rows, each starting at 1
+        jdbc.update("DELETE FROM invoice_sequence WHERE financial_year <> '2026-27'");
+        jdbc.update("UPDATE invoice_sequence SET next_number = 1");
     }
 
     protected AppUser admin() {
