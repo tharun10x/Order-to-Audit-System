@@ -2,8 +2,6 @@
 
 **A working prototype for a small South Indian snack factory. It follows one transaction from the salesman's order all the way to the auditor's monthly report.**
 
-Shortlisting submission for the NIT Tiruchirappalli, Centre for Digital Infrastructure, Winter Internship 2026. Individual work by Tharun.
-
 Demo video: [LINK]
 
 > **Short version for evaluators**
