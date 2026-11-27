@@ -25,6 +25,7 @@ Problem reference: *Order-to-Audit System for a Small Food Manufacturer*, Centre
 15. [Reports](#15-reports)
 16. [Benchmark scenario — expected results](#16-benchmark-scenario--expected-results)
 17. [Assumptions](#17-assumptions)
+18. [Design-note details](#18-design-note-details)
 
 ---
 
@@ -568,3 +569,51 @@ Each row is an automated test in `src/test/java/com/ordertoaudit/benchmark`.
 | A15 | Seeded test logins, **dev and test profiles only**, for `POST /api/auth/login`: `admin` / `Admin@123` (Admin), `production` / `Prod@123` (Production), `salesman_a` / `Sales@123` (Salesman, Retailer A), `salesman_b` / `Sales@123` (Salesman, Distributor B), `auditor` / `Audit@123` (Auditor), `owner` / `Owner@123` (Owner). Stored as BCrypt hashes (cost 10). | Lets reviewers log in as each role. These are public dummy credentials and must never be used in production; no other profile loads them (R2.8). |
 | A16 | No customer advances: every payment is allocated in full to invoices when it is recorded (R12.6). | The benchmark records a payment against an invoice. Advances would need their own balance and adjustment rules. |
 | A17 | "Today" for business dates (order date; the default date of an invoice, dispatch, payment or credit note when none is given; the default report period; the dashboard; `businessDate` in the login and `/api/auth/me` responses, which screens use as their default date) comes from a business clock: the real date in IST, or a fixed date (10:00 IST) set with `OTA_BUSINESS_DATE` (setting `ota.clock.fixed-date`). Tests fix it at 28 November 2026. Security timestamps always use the real time. | Lets a demo and the tests run "in" the benchmark month on any real date, so results do not depend on when they are run. A warning is logged at startup whenever the date is fixed. |
+
+---
+
+## 18. Design-note details
+
+The [design note](design-note.md) keeps to the brief's two pages. This section holds the detail cut from it, so none of it is lost.
+
+### Database integrity constraints
+
+The database refuses bad data even if the code is wrong; each constraint has a test in `SchemaAndSeedTest`.
+
+- `stock_movement`: `sign_matches_type` (the sign of `qty` follows the movement type; ADJUSTMENT and REVERSAL may be either), `value_sign_matches_qty`, `source_required` (`source_id` is NULL only for OPENING), and `UNIQUE NULLS NOT DISTINCT (source_type, source_id, item_id, movement_type)` so a document can't be posted twice (R6.8).
+- `purchase_line`, `dispatch_line`, `invoice_line`: unique per (document, item), so a repeated item is rejected at the line, before it could collide with the movement constraint.
+- `invoice` and `credit_note`: total = taxable + taxes (`total_adds_up`, `cn_total_adds_up`), and CGST/SGST only for intra-state, IGST only for inter-state (`tax_matches_supply`, `cn_tax_matches_supply`). A credit note repeats the invoice's tax split.
+- `customer`: GSTIN is 15 characters and starts with the state code. All state codes are `VARCHAR(2)` with `CHECK '^[0-9]{2}$'`.
+- `stock_adjustment`: `reason` is mandatory and not blank.
+- `bom`: one active version per product (`ux_bom_one_active`); `bom_line` and `production_consumption` are unique per (document, item); `scrap_within_actual` keeps scrap within the actual quantity.
+- Statuses: `production_run.status` is DRAFT, POSTED, CANCELLED or REVERSED (`posted_has_output` requires output once posted). `purchase.status` and `payment.status` are POSTED or REVERSED. On all three, `status = 'REVERSED'`, `reversed_at` and `reversed_by` are set together or not at all (`<table>_reversed_state`, `<table>_reversed_by_with_at`). The `invoice_outstanding` view counts only POSTED payments.
+- `audit_log`: the allowed actions include POST, REVERSE, DISPATCH, PAYMENT, LOGIN and LOGIN_FAILED. `user_id` and `entity_id` are nullable (failed login), and `username` is stored.
+- `invoice_sequence`: primary key (`doc_type`, `financial_year`). Invoice, credit-note, production-run, order and dispatch numbers (`INV/2026-27/0001`, and likewise `CN/`, `RUN/`, `SO/`, `DC/`) are gap-free, issued from a counter row locked in the posting transaction. It has no foreign key to the documents (the diagram shows it dotted).
+- `company.variance_tolerance_pct` (default 3.00) is the variance flag tolerance; `company` also supplies the seller details an invoice copies (V3).
+
+### Data model details
+
+- **Units.** Every item has one base unit (kg, litre, piece, packet). `uom.factor_to_base` converts g→kg and ml→L, and `item_uom_conversion` converts carton→20 packets for that item (section 3).
+- **Snapshots.** Order lines copy the price, and `production_consumption` copies the BOM standard (`planned_qty`). The invoice copies the seller and buyer details, and each invoice line the item name, HSN, price and tax (R10.5).
+- **Money and quantity** are `NUMERIC` (qty 14,4; money 14,2; rate 14,4; percentage 5,2) in the database and `BigDecimal` in Java, rounded `HALF_UP` (section 4).
+- **The diagram** omits the user-tracking foreign keys to `app_user` (`created_by` on every document, `approved_by` on orders, `posted_by` on runs, `reversed_by` on purchases, runs and payments). `stock_movement.source_type` + `source_id` point to the source document without a foreign key, because the source table varies.
+
+### Stock details
+
+- Reading a balance sums the item's movements, which is fine at this factory's volume; a cached balance table is a later optimisation if reports get slow.
+- The stock summary report checks opening + receipts − issues ± adjustments = closing for every item and refuses to print a report that does not balance; the seeded OPENING rows always count as opening (R15.5).
+- Order approval and invoicing do not move stock; approval only reserves it (R9).
+- Corrections use `REVERSAL` movements with the original source document (so a document can be reversed once), never `ADJUSTMENT`. Posted invoices are cancelled with credit notes. *(The reversal services are planned, not built yet; the schema is ready.)*
+- Reports (R15) are read-only views over the same tables: one service per report builds a table model, and three exporters (CSV, Excel, PDF) render any of them. Sales and GST reports read the invoice's own copied details, an invoice counts in its own month and its credit note negative in the note's month, and outstanding can be shown as of any past date.
+
+### Posting a production run
+
+DRAFT → POSTED, once only, in one transaction (a posted run can later become REVERSED, a draft can be CANCELLED): lock the run and its items → check stock → post one `ISSUE` per material for everything issued (used + scrap; the scrap part is kept on `production_consumption.scrap_qty`) → post `PRODUCTION_OUTPUT` for the good packets, valued at the total cost of those issues → store each line's issue cost. If any material is short, the whole post is refused with the full shortage list. Variances and costs are calculated when a run is viewed, not stored. Run numbers (`RUN/2026-27/0001`) come from the per-financial-year counter (section 8).
+
+The pouch flag (+3.19 %) is in addition to the brief's expected flags: it makes the damaged packaging visible, which is the wastage problem the client described.
+
+### Valuation details
+
+- **Why WAC, in full:** flour and oil are bulk stock mixed in the same bin, so lots aren't physically separated. WAC reflects that, smooths price changes and is simple to audit (AS 2 permits it). FIFO would need lot tracking; last price would overstate cost while older, cheaper stock is being used. For comparison, the benchmark cost per packet would be ₹30.90 under FIFO and ₹31.54 at last price.
+- **Rounding:** cost per packet is ₹31.1436, shown as ₹31.14. The margin is worked out from the full figure and rounded only for display: ₹18.8564, shown ₹18.86, which is 37.71 % of the ₹50 price.
+- **Finished-goods valuation:** output enters stock at material + packaging only, (3,435.00 + 620.00) ÷ 188 = ₹21.5691 per packet. Overheads are not part of stock value because the benchmark adds them after posting (step 8) and the ledger is never edited; they appear in the costing report, which is calculated on request. Opening FG (50 packets) is valued at ₹30.00 (A14), so the FG average after the run is 5,555.00 ÷ 238 ≈ ₹23.34 and dispatches are valued at that average. AS 2 would also put conversion costs in inventory cost; this is the documented simplification of R13.6.
