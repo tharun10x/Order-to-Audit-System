@@ -25,7 +25,7 @@ async function signIn() {
 describe('Sign in', () => {
   it.each([
     ['SALESMAN', '/sales/new'],
-    ['ADMIN', '/admin/orders'],
+    ['ADMIN', '/orders'],
     ['PRODUCTION', '/production/runs'],
     ['AUDITOR', '/reports'],
     ['OWNER', '/reports'],
@@ -66,20 +66,20 @@ describe('Sign in', () => {
 
   it('sends a signed-out visitor to the login page', async () => {
     fakeBackend({ ...meRoute('SALESMAN') })
-    const signedOut = renderApp('/admin/orders', null)
+    const signedOut = renderApp('/orders', null)
     expect(signedOut.state.location.pathname).toBe('/login')
   })
 
   it('tells a salesman they cannot open the admin pages', async () => {
     fakeBackend({ ...meRoute('SALESMAN') })
-    renderApp('/admin/orders', 'SALESMAN')
+    renderApp('/orders', 'SALESMAN')
 
     expect(await screen.findByRole('heading', { name: 'Not allowed' })).toBeInTheDocument()
   })
 
   it('signs out: the session is cleared and the login page shows', async () => {
     fakeBackend({ ...meRoute('ADMIN'), 'GET /api/orders': [] })
-    const router = renderApp('/admin/orders', 'ADMIN')
+    const router = renderApp('/orders', 'ADMIN')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Sign out' }))
 
@@ -107,7 +107,7 @@ describe('the token', () => {
       'GET /api/orders': () =>
         jsonResponse({ status: 401, error: 'Unauthorized', message: 'A valid login token is required', details: [] }, 401),
     })
-    const router = renderApp('/admin/orders', 'ADMIN')
+    const router = renderApp('/orders', 'ADMIN')
 
     await screen.findByText('Your session ended. Sign in again.')
     expect(router.state.location.pathname).toBe('/login')

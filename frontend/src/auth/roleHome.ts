@@ -6,7 +6,7 @@ export function roleHome(role: Role): string {
     case 'SALESMAN':
       return '/sales/new'
     case 'ADMIN':
-      return '/admin/orders'
+      return '/orders'
     case 'PRODUCTION':
       return '/production/runs'
     case 'AUDITOR':

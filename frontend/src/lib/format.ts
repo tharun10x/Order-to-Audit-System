@@ -13,6 +13,14 @@ export function formatMoney(amount: number, options: { withSymbol?: boolean } = 
   return `${sign}${symbol}${money.format(Math.abs(amount))}`
 }
 
+const rate = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 4 })
+
+/** A rate or unit cost (4 decimals in the database): 43.125 → "43.125", 45 → "45.00". */
+export function formatRate(value: number): string {
+  const sign = value < 0 ? MINUS : ''
+  return `${sign}${rate.format(Math.abs(value))}`
+}
+
 /** As the API sends it, trailing zeros trimmed, with the unit: "120 kg", "19.5 L", "150 pkt". */
 export function formatQty(qty: number, unit: string): string {
   const sign = qty < 0 ? MINUS : ''

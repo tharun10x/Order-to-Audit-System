@@ -20,7 +20,7 @@ describe('Admin orders', () => {
       'GET /api/orders': [submitted],
       'GET /api/orders?status=SUBMITTED': [submitted],
     })
-    const router = renderApp('/admin/orders', 'ADMIN')
+    const router = renderApp('/orders', 'ADMIN')
 
     const table = await screen.findByRole('table', { name: 'Orders' })
     const row = within(table).getByRole('row', { name: /SO\/2026-27\/0002/ })
@@ -46,7 +46,7 @@ describe('Admin orders', () => {
         return jsonResponse(approved)
       },
     })
-    renderApp('/admin/orders/7', 'ADMIN')
+    renderApp('/orders/7', 'ADMIN')
 
     const stock = await screen.findByRole('table', { name: 'Stock check' })
     expect(within(stock).getByText('Murukku 200 g')).toBeInTheDocument()
@@ -71,7 +71,7 @@ describe('Admin orders', () => {
       'GET /api/orders/7/stock-check': shortStockCheck,
       'POST /api/orders/7/reject': () => jsonResponse({ ...submitted, status: 'REJECTED', remarks: 'Credit limit reached' }),
     })
-    renderApp('/admin/orders/7', 'ADMIN')
+    renderApp('/orders/7', 'ADMIN')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Reject order' }))
     expect(screen.getByText('Enter a reason, for example "Credit limit reached".')).toBeInTheDocument()
@@ -100,7 +100,7 @@ describe('Admin orders', () => {
           409,
         ),
     })
-    renderApp('/admin/orders/7', 'ADMIN')
+    renderApp('/orders/7', 'ADMIN')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Approve 88 packets' }))
 
@@ -116,7 +116,7 @@ describe('Admin orders', () => {
       'GET /api/orders/7': approved,
       'POST /api/invoices': { id: 1, invoiceNo: 'INV/2026-27/0001', invoiceDate: BUSINESS_DATE, total: 4620 },
     })
-    renderApp('/admin/orders/7', 'ADMIN')
+    renderApp('/orders/7', 'ADMIN')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Create invoice' }))
 

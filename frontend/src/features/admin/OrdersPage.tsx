@@ -73,8 +73,8 @@ export function OrdersPage() {
                   key={order.id}
                   order={order}
                   selected={order.id === selectedId}
-                  href={`/admin/orders/${order.id}${query}`}
-                  onSelect={() => navigate(`/admin/orders/${order.id}${query}`)}
+                  href={`/orders/${order.id}${query}`}
+                  onSelect={() => navigate(`/orders/${order.id}${query}`)}
                 />
               ))}
             </tbody>

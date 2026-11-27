@@ -2,6 +2,8 @@ import { useState, type ReactNode } from 'react'
 
 import { useOrder, useStockCheck } from '../../api/queries'
 import type { Order } from '../../api/types'
+import { useSession } from '../../auth/authContext'
+import { can } from '../../auth/permissions'
 import { ErrorBox, SuccessLine } from '../../components/Messages'
 import { Panel } from '../../components/Panel'
 import { StatusText } from '../../components/StatusText'
@@ -16,10 +18,14 @@ import { StockCheckTable } from './StockCheckTable'
 /**
  * One order: its lines, then what can be done with it now. SUBMITTED: stock check, approve, edit, reject
  * (R9.3 to R9.5). APPROVED: create the invoice. Each action area is its own panel (no nested panels).
+ * Only the admin sees the actions; auditor and owner read the order.
  */
 export function OrderDetail({ orderId }: { orderId: number }) {
+  const session = useSession()
+  // Auditor and owner see the order read-only: no stock check (an admin tool) and no actions (R2.3)
+  const manage = can.manageSales(session.user.role)
   const order = useOrder(orderId)
-  const submitted = order.data?.status === 'SUBMITTED'
+  const submitted = manage && order.data?.status === 'SUBMITTED'
   const stockCheck = useStockCheck(orderId, submitted)
   const [notice, setNotice] = useState<string | null>(null)
 
@@ -50,7 +56,7 @@ export function OrderDetail({ orderId }: { orderId: number }) {
       ) : null}
       {submitted ? <EditLinesPanel order={order.data} onDone={setNotice} /> : null}
       {submitted ? <RejectPanel order={order.data} onDone={setNotice} /> : null}
-      {order.data.status === 'APPROVED' ? <CreateInvoicePanel order={order.data} onDone={setNotice} /> : null}
+      {manage && order.data.status === 'APPROVED' ? <CreateInvoicePanel order={order.data} onDone={setNotice} /> : null}
     </div>
   )
 }

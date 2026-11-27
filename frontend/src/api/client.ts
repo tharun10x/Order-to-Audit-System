@@ -79,6 +79,44 @@ export async function request<T>(method: string, path: string, body?: unknown, o
   throw error
 }
 
+/** A file from the server, named as the server's Content-Disposition header says. */
+export interface DownloadedFile {
+  blob: Blob
+  fileName: string
+}
+
+/** GET a file (an invoice PDF) with the token. Errors are turned into an ApiError like any other request. */
+export async function download(path: string, fallbackName: string): Promise<DownloadedFile> {
+  const token = config.getToken()
+  let response: Response
+  try {
+    response = await fetch(path, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  } catch {
+    throw new ApiError(NETWORK_MESSAGE, 0, [], 'network')
+  }
+  if (!response.ok) {
+    const error = await toApiError(response)
+    if (response.status === 401 && token) {
+      config.onUnauthorized()
+    }
+    throw error
+  }
+  return { blob: await response.blob(), fileName: fileNameFrom(response.headers.get('Content-Disposition')) ?? fallbackName }
+}
+
+/** inline; filename="INV-2026-27-0001.pdf" → INV-2026-27-0001.pdf. Also reads the RFC 5987 form filename*=UTF-8''... */
+export function fileNameFrom(contentDisposition: string | null): string | null {
+  if (!contentDisposition) {
+    return null
+  }
+  const encoded = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(contentDisposition)
+  if (encoded) {
+    return decodeURIComponent(encoded[1].trim())
+  }
+  const plain = /filename\s*=\s*"?([^";]+)"?/i.exec(contentDisposition)
+  return plain ? plain[1].trim() : null
+}
+
 export const api = {
   get: <T>(path: string) => request<T>('GET', path),
   post: <T>(path: string, body?: unknown, options?: RequestOptions) => request<T>('POST', path, body, options),

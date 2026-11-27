@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { fakeBackend, jsonResponse } from '../test/renderApp'
-import { api, ApiError, configureApi, FORBIDDEN_MESSAGE, NETWORK_MESSAGE } from './client'
+import { api, ApiError, configureApi, download, fileNameFrom, FORBIDDEN_MESSAGE, NETWORK_MESSAGE } from './client'
 
 describe('the api client', () => {
   const onUnauthorized = vi.fn()
@@ -107,6 +107,25 @@ describe('the api client', () => {
 
     expect(error.isNetwork).toBe(true)
     expect(error.message).toBe(NETWORK_MESSAGE)
+  })
+
+  it('downloads a file under the name in Content-Disposition, with the token', async () => {
+    const { fetchMock } = fakeBackend({
+      'GET /api/invoices/10/pdf': () => new Response('%PDF', {
+        status: 200, headers: { 'Content-Disposition': 'inline; filename="INV-2026-27-0001.pdf"' },
+      }),
+    })
+
+    const file = await download('/api/invoices/10/pdf', 'fallback.pdf')
+
+    expect(file.fileName).toBe('INV-2026-27-0001.pdf')
+    expect(((fetchMock.mock.calls[0][1] as RequestInit).headers as Record<string, string>).Authorization).toBe('Bearer the-token')
+  })
+
+  it('reads both forms of the file name', () => {
+    expect(fileNameFrom('attachment; filename="sales-register_2026-11-01_2026-11-30.xlsx"')).toBe('sales-register_2026-11-01_2026-11-30.xlsx')
+    expect(fileNameFrom("attachment; filename*=UTF-8''INV%202026.pdf")).toBe('INV 2026.pdf')
+    expect(fileNameFrom(null)).toBeNull()
   })
 
   it('gives a plain sentence for a server error or a body that is not JSON', async () => {

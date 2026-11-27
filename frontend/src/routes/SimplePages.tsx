@@ -1,4 +1,4 @@
-import { Link, Navigate } from 'react-router'
+import { Link, Navigate, useParams } from 'react-router'
 
 import { useAuth } from '../auth/authContext'
 import { roleHome } from '../auth/roleHome'
@@ -18,4 +18,10 @@ export function NotFound() {
       </Link>
     </main>
   )
+}
+
+/** Milestone 1 linked orders under /admin/orders; those links keep working. */
+export function OldOrderLink() {
+  const { orderId } = useParams()
+  return <Navigate to={orderId ? `/orders/${orderId}` : '/orders'} replace />
 }
