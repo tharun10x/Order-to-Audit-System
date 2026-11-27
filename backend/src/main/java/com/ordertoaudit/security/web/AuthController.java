@@ -1,5 +1,8 @@
 package com.ordertoaudit.security.web;
 
+import java.time.Clock;
+import java.time.LocalDate;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,10 +26,12 @@ public class AuthController {
 
     private final AuthService authService;
     private final CurrentUserProvider currentUser;
+    private final Clock businessClock;
 
-    public AuthController(AuthService authService, CurrentUserProvider currentUser) {
+    public AuthController(AuthService authService, CurrentUserProvider currentUser, Clock businessClock) {
         this.authService = authService;
         this.currentUser = currentUser;
+        this.businessClock = businessClock;
     }
 
     /** The only public endpoint (R2.6). */
@@ -37,7 +42,7 @@ public class AuthController {
 
     @PreAuthorize(Roles.SIGNED_IN)
     @GetMapping("/me")
-    public UserResponse me() {
-        return UserResponse.from(currentUser.current());
+    public MeResponse me() {
+        return MeResponse.from(currentUser.current(), LocalDate.now(businessClock));
     }
 }

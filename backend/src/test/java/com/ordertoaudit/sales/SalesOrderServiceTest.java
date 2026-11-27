@@ -251,4 +251,26 @@ class SalesOrderServiceTest extends AbstractSalesTest {
         assertThat(jdbc.queryForList("SELECT action FROM audit_log WHERE entity_type = 'SALES_ORDER' ORDER BY id",
                 String.class)).containsExactly("CREATE", "UPDATE", "APPROVE", "CANCEL", "CREATE", "REJECT");
     }
+
+    /** The order's value before GST, rounded per line like the invoice (R10.4), and its invoice number once billed. */
+    @Test
+    void anOrderShowsItsValueAndLaterItsInvoiceNumber() {
+        OrderResponse order = order("salesman_a", "RET-A", "150");
+        assertThat(order.taxableValue()).isEqualByComparingTo("7500.00");   // 150 x 50.00
+        assertThat(order.lines().get(0).taxableValue()).isEqualByComparingTo("7500.00");
+        assertThat(order.invoiceNo()).isNull();
+
+        // Once approved, the approved quantity counts
+        OrderResponse approved = orderService.approve(order.id(), approving("88"), admin());
+        assertThat(approved.taxableValue()).isEqualByComparingTo("4400.00");
+        assertThat(approved.invoiceNo()).isNull();
+
+        invoice(order.id());
+        assertThat(orderService.get(order.id(), admin()).invoiceNo()).isEqualTo("INV/2026-27/0001");
+        assertThat(orderService.list(null, user("salesman_a")))
+                .singleElement().satisfies(listed -> {
+                    assertThat(listed.invoiceNo()).isEqualTo("INV/2026-27/0001");
+                    assertThat(listed.taxableValue()).isEqualByComparingTo("4400.00");
+                });
+    }
 }

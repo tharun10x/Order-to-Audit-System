@@ -64,7 +64,8 @@ class AuthApiTest extends AbstractLedgerTest {
                 .andExpect(jsonPath("$.user.username").value("admin"))
                 .andExpect(jsonPath("$.user.fullName").value("Admin"))
                 .andExpect(jsonPath("$.user.role").value("ADMIN"))
-                .andExpect(jsonPath("$.user.passwordHash").doesNotExist()));
+                .andExpect(jsonPath("$.user.passwordHash").doesNotExist())
+                .andExpect(jsonPath("$.businessDate").value("2026-11-28")));
 
         Jwt token = jwtDecoder.decode(JsonPath.read(response, "$.token"));
         assertThat(token.getHeaders().get("alg")).isEqualTo("HS256");
@@ -164,6 +165,7 @@ class AuthApiTest extends AbstractLedgerTest {
                 .andExpect(jsonPath("$.id").value(userId(username).intValue()))
                 .andExpect(jsonPath("$.username").value(username))
                 .andExpect(jsonPath("$.role").value(role))
+                .andExpect(jsonPath("$.businessDate").value("2026-11-28"))
                 .andExpect(jsonPath("$.passwordHash").doesNotExist());
     }
 

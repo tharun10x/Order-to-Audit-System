@@ -90,9 +90,13 @@ public class InvoiceService {
         this.businessClock = businessClock;
     }
 
-    /** R10.1 to R10.5: one invoice for the whole APPROVED order, for the approved quantities. */
+    /**
+     * R10.1 to R10.5: one invoice for the whole APPROVED order, for the approved quantities.
+     * requestedDate may be null, which means the business date (A17).
+     */
     @Transactional
-    public InvoiceResponse createFromOrder(Long orderId, LocalDate invoiceDate, AppUser user) {
+    public InvoiceResponse createFromOrder(Long orderId, LocalDate requestedDate, AppUser user) {
+        LocalDate invoiceDate = requestedDate != null ? requestedDate : LocalDate.now(businessClock);
         SalesOrder order = orderRepository.lockById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order " + orderId + " not found"));
         if (order.getStatus() != OrderStatus.APPROVED) {

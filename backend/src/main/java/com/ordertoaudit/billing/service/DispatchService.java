@@ -1,5 +1,6 @@
 package com.ordertoaudit.billing.service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -46,16 +47,19 @@ public class DispatchService {
     private final InventoryService inventoryService;
     private final DocumentNumberService documentNumberService;
     private final AuditService auditService;
+    private final Clock businessClock;
 
     public DispatchService(DispatchRepository dispatchRepository, InvoiceRepository invoiceRepository,
                            SalesOrderRepository orderRepository, InventoryService inventoryService,
-                           DocumentNumberService documentNumberService, AuditService auditService) {
+                           DocumentNumberService documentNumberService, AuditService auditService,
+                           Clock businessClock) {
         this.dispatchRepository = dispatchRepository;
         this.invoiceRepository = invoiceRepository;
         this.orderRepository = orderRepository;
         this.inventoryService = inventoryService;
         this.documentNumberService = documentNumberService;
         this.auditService = auditService;
+        this.businessClock = businessClock;
     }
 
     /**
@@ -74,7 +78,7 @@ public class DispatchService {
             throw new ConflictException("Invoice " + invoice.getInvoiceNo() + " cannot be dispatched: invoice is "
                     + invoice.getStatus() + " and order " + order.getOrderNo() + " is " + order.getStatus());
         }
-        LocalDate date = request.dispatchDate();
+        LocalDate date = request.dispatchDate() != null ? request.dispatchDate() : LocalDate.now(businessClock);
         if (date.isBefore(invoice.getInvoiceDate())) {
             throw new BadRequestException("The dispatch date " + date + " is before the invoice date "
                     + invoice.getInvoiceDate());

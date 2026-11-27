@@ -1,6 +1,7 @@
 package com.ordertoaudit.payments.service;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -45,15 +46,17 @@ public class PaymentService {
     private final InvoiceOutstandingRepository outstandingRepository;
     private final CustomerRepository customerRepository;
     private final AuditService auditService;
+    private final Clock businessClock;
 
     public PaymentService(PaymentRepository paymentRepository, InvoiceRepository invoiceRepository,
                           InvoiceOutstandingRepository outstandingRepository, CustomerRepository customerRepository,
-                          AuditService auditService) {
+                          AuditService auditService, Clock businessClock) {
         this.paymentRepository = paymentRepository;
         this.invoiceRepository = invoiceRepository;
         this.outstandingRepository = outstandingRepository;
         this.customerRepository = customerRepository;
         this.auditService = auditService;
+        this.businessClock = businessClock;
     }
 
     /**
@@ -66,6 +69,7 @@ public class PaymentService {
         Customer customer = customerRepository.findById(request.customerId())
                 .orElseThrow(() -> new BadRequestException("Unknown customer id " + request.customerId()));
         BigDecimal amount = requirePaise("Payment amount", request.amount());
+        LocalDate receivedOn = request.receivedOn() != null ? request.receivedOn() : LocalDate.now(businessClock);
         Map<Long, BigDecimal> allocations = checkAllocations(request.allocations(), amount);
 
         Map<Long, Invoice> invoices = invoiceRepository.lockAllByIdOrderById(allocations.keySet()).stream()
@@ -73,7 +77,7 @@ public class PaymentService {
 
         Payment payment = new Payment();
         payment.setCustomer(customer);
-        payment.setReceivedOn(request.receivedOn());
+        payment.setReceivedOn(receivedOn);
         payment.setAmount(amount);
         payment.setMode(request.mode());
         payment.setReference(request.reference());
@@ -81,7 +85,7 @@ public class PaymentService {
         payment.setCreatedBy(user);
 
         allocations.forEach((invoiceId, part) -> {
-            Invoice invoice = requirePayable(invoices.get(invoiceId), invoiceId, customer, request.receivedOn(), part);
+            Invoice invoice = requirePayable(invoices.get(invoiceId), invoiceId, customer, receivedOn, part);
             PaymentAllocation allocation = new PaymentAllocation();
             allocation.setInvoice(invoice);
             allocation.setAmount(part);

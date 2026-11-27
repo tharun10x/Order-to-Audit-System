@@ -13,10 +13,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
-/** Body of POST /api/payments. The allocations must add up to the amount (R12.6). */
+/** Body of POST /api/payments. The allocations must add up to the amount (R12.6). receivedOn defaults to the business date. */
 public record PaymentRequest(
         @NotNull Long customerId,
-        @NotNull LocalDate receivedOn,
+        LocalDate receivedOn,
         @NotNull @Positive @Digits(integer = 12, fraction = 2) BigDecimal amount,
         @NotNull PaymentMode mode,
         @Size(max = 50) String reference,

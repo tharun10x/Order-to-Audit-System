@@ -63,7 +63,9 @@ class SalesApiTest extends AbstractSalesTest {
         UUID uuid = UUID.randomUUID();
         long orderId = idOf(postJson("/api/orders", orderBody("RET-A", uuid, 150))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.status").value("SUBMITTED")));
+                .andExpect(jsonPath("$.status").value("SUBMITTED"))
+                .andExpect(jsonPath("$.taxableValue").value(7500.0))
+                .andExpect(jsonPath("$.invoiceNo").doesNotExist()));
         // R9.7: the same request again is 200 with the same order
         postJson("/api/orders", orderBody("RET-A", uuid, 150))
                 .andExpect(status().isOk())
@@ -85,6 +87,7 @@ class SalesApiTest extends AbstractSalesTest {
                 .andExpect(jsonPath("$.invoiceNo").value("INV/2026-27/0001"))
                 .andExpect(jsonPath("$.total").value(7875.0))
                 .andExpect(jsonPath("$.buyer.name").value("Retailer A")));
+        perform(get("/api/orders/" + orderId)).andExpect(jsonPath("$.invoiceNo").value("INV/2026-27/0001"));
 
         byte[] pdf = perform(get("/api/invoices/" + invoiceId + "/pdf"))
                 .andExpect(status().isOk())

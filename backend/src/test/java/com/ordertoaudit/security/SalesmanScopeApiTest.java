@@ -70,10 +70,14 @@ class SalesmanScopeApiTest extends AbstractSalesTest {
 
     @Test
     void eachSalesmanListsOnlyTheirOwnCustomers() throws Exception {
+        // intraState: the customer is in the factory's state (Tamil Nadu), so CGST + SGST apply (R10.3)
         getAs("salesman_a", "/api/customers")
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].code", contains("RET-A")));
-        getAs("salesman_b", "/api/customers").andExpect(jsonPath("$[*].code", contains("DIST-B")));
+                .andExpect(jsonPath("$[*].code", contains("RET-A")))
+                .andExpect(jsonPath("$[0].intraState").value(true));
+        getAs("salesman_b", "/api/customers")
+                .andExpect(jsonPath("$[*].code", contains("DIST-B")))
+                .andExpect(jsonPath("$[0].intraState").value(false));
         getAs("admin", "/api/customers").andExpect(jsonPath("$[*].code", contains("DIST-B", "RET-A")));
     }
 

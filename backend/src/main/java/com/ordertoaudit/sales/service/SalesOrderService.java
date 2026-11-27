@@ -125,7 +125,7 @@ public class SalesOrderService {
         orderRepository.save(order);
 
         auditService.log(ENTITY, order.getId(), AuditAction.CREATE, null, snapshot(order), user);
-        return new CreateOrderResult(OrderResponse.from(order), true);
+        return new CreateOrderResult(toResponse(order), true);
     }
 
     /** R9.7: the same UUID returns the saved order. It must be visible to the caller and for the same customer. */
@@ -133,12 +133,12 @@ public class SalesOrderService {
         if (!canSee(existing, user) || !existing.getCustomer().getId().equals(customer.getId())) {
             throw new ConflictException("clientUuid " + clientUuid + " was already used for another order");
         }
-        return OrderResponse.from(existing);
+        return toResponse(existing);
     }
 
     @Transactional(readOnly = true)
     public OrderResponse get(Long orderId, AppUser user) {
-        return OrderResponse.from(findVisible(orderId, user));
+        return toResponse(findVisible(orderId, user));
     }
 
     /** R2.2: a salesman sees only their own orders. status is an optional filter. */
@@ -154,7 +154,7 @@ public class SalesOrderService {
                     ? orderRepository.findAllByOrderByIdDesc()
                     : orderRepository.findByStatusOrderByIdDesc(status);
         }
-        return orders.stream().map(OrderResponse::from).toList();
+        return toResponses(orders);
     }
 
     /** R9.4: shown before approval. Only a preview: approve() checks again under the item locks. */
@@ -203,7 +203,7 @@ public class SalesOrderService {
         orderRepository.flush();   // new lines get their ids before the response is built
 
         auditService.log(ENTITY, order.getId(), AuditAction.UPDATE, before, snapshot(order), user);
-        return OrderResponse.from(order);
+        return toResponse(order);
     }
 
     /**
@@ -241,7 +241,7 @@ public class SalesOrderService {
         order.setApprovedAt(Instant.now());
 
         auditService.log(ENTITY, order.getId(), AuditAction.APPROVE, before, snapshot(order), user);
-        return OrderResponse.from(order);
+        return toResponse(order);
     }
 
     @Transactional
@@ -257,7 +257,7 @@ public class SalesOrderService {
         order.setRemarks(reason.strip());
 
         auditService.log(ENTITY, order.getId(), AuditAction.REJECT, before, snapshot(order), user);
-        return OrderResponse.from(order);
+        return toResponse(order);
     }
 
     /** R9.9: allowed before invoicing. Cancelling an APPROVED order releases its reservation. */
@@ -270,7 +270,24 @@ public class SalesOrderService {
         order.setStatus(OrderStatus.CANCELLED);
 
         auditService.log(ENTITY, order.getId(), AuditAction.CANCEL, before, snapshot(order), user);
-        return OrderResponse.from(order);
+        return toResponse(order);
+    }
+
+    private OrderResponse toResponse(SalesOrder order) {
+        return OrderResponse.from(order, orderRepository.findInvoiceNo(order.getId()).orElse(null));
+    }
+
+    /** One query for all the invoice numbers of a list. */
+    private List<OrderResponse> toResponses(List<SalesOrder> orders) {
+        if (orders.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, String> invoiceNos = new HashMap<>();
+        for (SalesOrderRepository.OrderInvoice row
+                : orderRepository.findInvoiceNos(orders.stream().map(SalesOrder::getId).toList())) {
+            invoiceNos.put(row.getOrderId(), row.getInvoiceNo());
+        }
+        return orders.stream().map(order -> OrderResponse.from(order, invoiceNos.get(order.getId()))).toList();
     }
 
     /** The quantity to approve per item code: what the admin entered, otherwise the full ordered quantity. */

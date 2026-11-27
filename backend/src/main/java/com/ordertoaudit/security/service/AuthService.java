@@ -1,6 +1,8 @@
 package com.ordertoaudit.security.service;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,15 +29,17 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
     private final AuditService auditService;
+    private final Clock businessClock;
     /** Compared against when the username is unknown, so that answer takes as long as a wrong password. */
     private final String dummyHash;
 
     public AuthService(AppUserRepository userRepository, PasswordEncoder passwordEncoder, TokenService tokenService,
-                       AuditService auditService) {
+                       AuditService auditService, Clock businessClock) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
         this.auditService = auditService;
+        this.businessClock = businessClock;
         this.dummyHash = passwordEncoder.encode("no user has this password");
     }
 
@@ -54,7 +58,8 @@ public class AuthService {
         }
         TokenService.IssuedToken token = tokenService.issue(user);
         auditService.log("USER", user.getId(), AuditAction.LOGIN, null, Map.of("role", user.getRole().name()), user);
-        return Optional.of(new LoginResponse(token.value(), token.expiresAt(), UserResponse.from(user)));
+        return Optional.of(new LoginResponse(token.value(), token.expiresAt(), LocalDate.now(businessClock),
+                UserResponse.from(user)));
     }
 
     private boolean matches(String password, String hash) {

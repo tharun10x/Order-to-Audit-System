@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import com.ordertoaudit.AbstractSalesTest;
 import com.ordertoaudit.billing.entity.InvoiceStatus;
+import com.ordertoaudit.billing.web.DispatchRequest;
 import com.ordertoaudit.billing.web.DispatchResponse;
 import com.ordertoaudit.billing.web.InvoiceResponse;
 import com.ordertoaudit.common.error.BadRequestException;
@@ -130,7 +132,7 @@ class InvoiceAndDispatchTest extends AbstractSalesTest {
     void aDispatchCannotBeDatedBeforeItsInvoice() {
         InvoiceResponse invoice = retailerInvoice();
 
-        assertThatThrownBy(() -> dispatchService.dispatch(new com.ordertoaudit.billing.web.DispatchRequest(
+        assertThatThrownBy(() -> dispatchService.dispatch(new DispatchRequest(
                 invoice.id(), INVOICE_DAY.minusDays(1), null), admin()))
                 .isInstanceOf(BadRequestException.class);
     }
@@ -301,5 +303,30 @@ class InvoiceAndDispatchTest extends AbstractSalesTest {
                     customer.get("name"), customer.get("address"), customer.get("gstin"));
             jdbc.update("UPDATE item SET name = ? WHERE code = ?", itemName, PRODUCT);
         }
+    }
+
+    /** A17: a date left out is the business date (fixed at 28 November 2026 in tests). */
+    @Test
+    void invoiceAndDispatchDatesDefaultToTheBusinessDate() {
+        OrderResponse order = approvedOrder("salesman_a", "RET-A", "150");
+
+        InvoiceResponse invoice = invoiceService.createFromOrder(order.id(), null, admin());
+        assertThat(invoice.invoiceDate()).isEqualTo(LocalDate.of(2026, 11, 28));
+        assertThat(invoice.invoiceNo()).isEqualTo("INV/2026-27/0001");
+
+        DispatchResponse dispatch = dispatchService.dispatch(
+                new DispatchRequest(invoice.id(), null, null), admin());
+        assertThat(dispatch.dispatchDate()).isEqualTo(LocalDate.of(2026, 11, 28));
+    }
+
+    @Test
+    void aDefaultedDispatchDateIsStillCheckedAgainstTheInvoiceDate() {
+        InvoiceResponse invoice = invoiceService.createFromOrder(
+                approvedOrder("salesman_a", "RET-A", "10").id(), LocalDate.of(2026, 11, 30), admin());
+
+        assertThatThrownBy(() -> dispatchService.dispatch(
+                new DispatchRequest(invoice.id(), null, null), admin()))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("before the invoice date");
     }
 }

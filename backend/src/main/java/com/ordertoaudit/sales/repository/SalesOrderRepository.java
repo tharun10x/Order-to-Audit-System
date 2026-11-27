@@ -1,6 +1,7 @@
 package com.ordertoaudit.sales.repository;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,6 +24,20 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long> {
     Optional<SalesOrder> lockById(@Param("id") Long id);
 
     Optional<SalesOrder> findByClientUuid(UUID clientUuid);
+
+    /** The order's invoice number (also once cancelled). SQL, so the sales package needs no billing classes. */
+    @Query(value = "SELECT invoice_no FROM invoice WHERE order_id = :orderId", nativeQuery = true)
+    Optional<String> findInvoiceNo(@Param("orderId") Long orderId);
+
+    interface OrderInvoice {
+        Long getOrderId();
+
+        String getInvoiceNo();
+    }
+
+    @Query(value = "SELECT order_id AS orderId, invoice_no AS invoiceNo FROM invoice WHERE order_id IN (:orderIds)",
+            nativeQuery = true)
+    List<OrderInvoice> findInvoiceNos(@Param("orderIds") Collection<Long> orderIds);
 
     List<SalesOrder> findAllByOrderByIdDesc();
 

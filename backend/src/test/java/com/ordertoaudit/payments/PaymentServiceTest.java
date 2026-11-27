@@ -133,4 +133,19 @@ class PaymentServiceTest extends AbstractSalesTest {
         assertThat(outcomes).containsExactlyInAnyOrder("OK", "BadRequestException");
         assertThat(outstanding("RET-A")).isEqualTo("2875.00");
     }
+
+    /** A17: received today by the business clock when left out. The no-advance check still applies (R12.2). */
+    @Test
+    void theReceivedDateDefaultsToTheBusinessDate() {
+        PaymentResponse payment = paymentService.record(new PaymentRequest(customerId("RET-A"), null,
+                new BigDecimal("100.00"), PaymentMode.CASH, null, List.of(allocation(invoice.id(), "100.00"))), admin());
+        assertThat(payment.receivedOn()).isEqualTo(LocalDate.of(2026, 11, 28));
+
+        InvoiceResponse later = invoiceService.createFromOrder(
+                approvedOrder("salesman_a", "RET-A", "10").id(), LocalDate.of(2026, 11, 30), admin());
+        assertThatThrownBy(() -> paymentService.record(new PaymentRequest(customerId("RET-A"), null,
+                new BigDecimal("100.00"), PaymentMode.CASH, null, List.of(allocation(later.id(), "100.00"))), admin()))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("advances are not supported");
+    }
 }

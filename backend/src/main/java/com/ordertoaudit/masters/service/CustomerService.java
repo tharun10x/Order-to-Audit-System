@@ -6,8 +6,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ordertoaudit.masters.entity.AppUser;
+import com.ordertoaudit.masters.entity.Company;
 import com.ordertoaudit.masters.entity.Customer;
 import com.ordertoaudit.masters.entity.UserRole;
+import com.ordertoaudit.masters.repository.CompanyRepository;
 import com.ordertoaudit.masters.repository.CustomerRepository;
 import com.ordertoaudit.masters.web.CustomerResponse;
 
@@ -16,17 +18,22 @@ import com.ordertoaudit.masters.web.CustomerResponse;
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
+    private final CompanyRepository companyRepository;
 
-    public CustomerService(CustomerRepository customerRepository) {
+    public CustomerService(CustomerRepository customerRepository, CompanyRepository companyRepository) {
         this.customerRepository = customerRepository;
+        this.companyRepository = companyRepository;
     }
 
     /** Active customers (R5.4). A salesman gets only the ones assigned to them (R2.2). */
     @Transactional(readOnly = true)
     public List<CustomerResponse> list(AppUser user) {
+        String companyState = companyRepository.findAll().stream().findFirst()
+                .map(Company::getStateCode)
+                .orElseThrow(() -> new IllegalStateException("The company row is missing"));
         List<Customer> customers = user.getRole() == UserRole.SALESMAN
                 ? customerRepository.findBySalesmanIdAndActiveTrueOrderByNameAsc(user.getId())
                 : customerRepository.findByActiveTrueOrderByNameAsc();
-        return customers.stream().map(CustomerResponse::from).toList();
+        return customers.stream().map(customer -> CustomerResponse.from(customer, companyState)).toList();
     }
 }
