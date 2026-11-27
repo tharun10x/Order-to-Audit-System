@@ -33,7 +33,7 @@ erDiagram
     ITEM ||--o{ BOM : "FG recipe versions"
     BOM ||--|{ BOM_LINE : "has"
     ITEM ||--o{ BOM_LINE : "used"
-    BOM ||--o{ PRODUCTION_RUN : "standard for"
+    BOM ||--o{ PRODUCTION_RUN : "version used"
     PRODUCTION_RUN ||--|{ PRODUCTION_CONSUMPTION : "planned, actual, scrap"
     ITEM ||--o{ PRODUCTION_CONSUMPTION : "consumed"
     PRODUCTION_RUN |o--o{ OVERHEAD_ENTRY : "labour, gas"
@@ -44,7 +44,7 @@ erDiagram
     DISPATCH ||..o{ STOCK_MOVEMENT : "source"
     CREDIT_NOTE ||..o{ STOCK_MOVEMENT : "source"
     STOCK_ADJUSTMENT ||..o{ STOCK_MOVEMENT : "source"
-    INVOICE_SEQUENCE ||..o{ INVOICE : "numbers"
+    INVOICE_SEQUENCE ||..o{ INVOICE : "numbers INV, CN, RUN, SO, DC"
     COMPANY ||..o{ INVOICE : "seller copied"
 
     STOCK_MOVEMENT {
@@ -85,7 +85,7 @@ erDiagram
     }
 ```
 
-Full size: [PNG](../er-diagram/er-diagram.png), [SVG](../er-diagram/er-diagram.svg). Dotted lines have no foreign key (a movement's `source_type` + `source_id`, numbering, the seller snapshot). The `created_by`-style links to `app_user` are omitted.
+Full ERD with every column, key and status: [PNG](../er-diagram/er-diagram.png), [SVG](../er-diagram/er-diagram.svg). Dotted lines have no foreign key (a movement's `source_type` + `source_id`, numbering, the seller snapshot).
 
 - **One `item` table** for raw materials, packaging and finished goods, so all share **one ledger**. A finished good also carries price, HSN, GST rate and pack weight.
 - **Base units.** Quantities are stored in the item's base unit (kg, L, pc, pkt); g, ml and cartons convert at entry.

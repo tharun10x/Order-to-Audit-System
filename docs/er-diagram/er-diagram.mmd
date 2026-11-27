@@ -1,0 +1,327 @@
+%% Order-to-Audit: full ER diagram of the schema in db/migration V1-V3 (PostgreSQL 17).
+%% Render: npx @mermaid-js/mermaid-cli -i er-diagram.mmd -o er-diagram.svg (and -o er-diagram.png -s 2 -b white).
+%% Column types are domains: qty = NUMERIC(14,4) in the item's base unit, money = NUMERIC(14,2),
+%% rate = NUMERIC(14,4), pct = NUMERIC(5,2). Every table also has created_at (timestamptz), not shown.
+%% Solid lines are foreign keys. Dotted lines are links without a foreign key.
+erDiagram
+    direction LR
+
+    %% ---------- users, company, units, items ----------
+    UOM ||--o{ ITEM : "base unit"
+    ITEM ||--o{ ITEM_UOM_CONVERSION : "other units"
+    UOM ||--o{ ITEM_UOM_CONVERSION : "unit"
+    APP_USER |o--o{ CUSTOMER : "salesman"
+    APP_USER ||--o{ SALES_ORDER : "salesman"
+    APP_USER |o--o{ AUDIT_LOG : "who"
+
+    %% ---------- sales: order, invoice, dispatch, payment ----------
+    CUSTOMER ||--o{ SALES_ORDER : "places"
+    SALES_ORDER ||--|{ SALES_ORDER_LINE : "has"
+    ITEM ||--o{ SALES_ORDER_LINE : "ordered"
+    SALES_ORDER |o--o| INVOICE : "billed as"
+    CUSTOMER ||--o{ INVOICE : "billed to"
+    INVOICE ||--|{ INVOICE_LINE : "has"
+    ITEM ||--o{ INVOICE_LINE : "billed"
+    INVOICE ||--o| CREDIT_NOTE : "cancelled by"
+    INVOICE ||--o{ DISPATCH : "shipped by"
+    DISPATCH ||--|{ DISPATCH_LINE : "has"
+    ITEM ||--o{ DISPATCH_LINE : "shipped"
+    CUSTOMER ||--o{ PAYMENT : "pays"
+    PAYMENT ||--|{ PAYMENT_ALLOCATION : "split into"
+    INVOICE ||--o{ PAYMENT_ALLOCATION : "settled by"
+
+    %% ---------- purchases, recipes, production ----------
+    SUPPLIER ||--o{ PURCHASE : "supplies"
+    PURCHASE ||--|{ PURCHASE_LINE : "has"
+    ITEM ||--o{ PURCHASE_LINE : "bought"
+    ITEM ||--o{ BOM : "FG recipe versions"
+    BOM ||--|{ BOM_LINE : "has"
+    ITEM ||--o{ BOM_LINE : "used"
+    BOM ||--o{ PRODUCTION_RUN : "version used"
+    PRODUCTION_RUN ||--|{ PRODUCTION_CONSUMPTION : "planned, actual, scrap"
+    ITEM ||--o{ PRODUCTION_CONSUMPTION : "consumed"
+    PRODUCTION_RUN |o--o{ OVERHEAD_ENTRY : "labour, gas"
+
+    %% ---------- stock ledger ----------
+    ITEM ||--o{ STOCK_ADJUSTMENT : "corrected"
+    ITEM ||--o{ STOCK_MOVEMENT : "ledger"
+    PURCHASE ||..o{ STOCK_MOVEMENT : "source PURCHASE"
+    PRODUCTION_RUN ||..o{ STOCK_MOVEMENT : "source PRODUCTION_RUN"
+    DISPATCH ||..o{ STOCK_MOVEMENT : "source DISPATCH"
+    CREDIT_NOTE ||..o{ STOCK_MOVEMENT : "source CREDIT_NOTE"
+    STOCK_ADJUSTMENT ||..o{ STOCK_MOVEMENT : "source ADJUSTMENT"
+
+    %% ---------- numbering and company snapshot (no FK) ----------
+    INVOICE_SEQUENCE ||..o{ INVOICE : "numbers INV, CN, RUN, SO, DC"
+    COMPANY ||..o{ INVOICE : "seller details copied"
+
+    APP_USER {
+        bigint id PK
+        varchar username UK
+        varchar password_hash "BCrypt"
+        varchar full_name
+        varchar role "SALESMAN ADMIN PRODUCTION AUDITOR OWNER"
+        boolean active
+    }
+    COMPANY {
+        bigint id PK "single row"
+        varchar name
+        varchar gstin
+        varchar state_code "decides CGST+SGST or IGST"
+        text address
+        pct variance_tolerance_pct "default 3.00"
+    }
+    UOM {
+        bigint id PK
+        varchar code UK "kg g L ml pc pkt ctn"
+        varchar name
+        varchar dimension "MASS VOLUME COUNT"
+        numeric factor_to_base "g=0.001 kg; NULL for ctn"
+    }
+    ITEM {
+        bigint id PK
+        varchar code UK
+        varchar name
+        varchar kind "RAW PACKAGING FG"
+        bigint base_uom_id FK "factor-1 unit"
+        varchar hsn_code "FG"
+        pct gst_rate "FG"
+        money selling_price "FG, per packet"
+        qty pack_weight_kg "FG"
+        qty reorder_level
+        boolean active
+    }
+    ITEM_UOM_CONVERSION {
+        bigint id PK
+        bigint item_id FK "UK with uom_id"
+        bigint uom_id FK
+        qty qty_in_base "1 ctn = 20 pkt"
+    }
+    CUSTOMER {
+        bigint id PK
+        varchar code UK
+        varchar name
+        varchar type "RETAILER DISTRIBUTOR"
+        varchar gstin "NULL if unregistered; starts with state_code"
+        varchar state_code
+        text address
+        varchar phone
+        bigint salesman_id FK
+        boolean active
+    }
+    SUPPLIER {
+        bigint id PK
+        varchar name
+        varchar gstin
+        varchar state_code "needed with a GSTIN"
+        varchar phone
+        boolean active
+    }
+    BOM {
+        bigint id PK
+        bigint product_id FK "the FG item made; UK with version"
+        int version
+        qty output_qty "packets per batch"
+        boolean active "one active per product"
+    }
+    BOM_LINE {
+        bigint id PK
+        bigint bom_id FK "UK with item_id"
+        bigint item_id FK
+        qty qty "per batch, base unit"
+        varchar line_kind "INGREDIENT or PACKAGING"
+    }
+    PURCHASE {
+        bigint id PK
+        bigint supplier_id FK "UK with bill_no"
+        date purchase_date
+        varchar bill_no
+        varchar status "POSTED REVERSED"
+        timestamptz reversed_at
+        bigint reversed_by FK "app_user"
+        bigint created_by FK "app_user"
+    }
+    PURCHASE_LINE {
+        bigint id PK
+        bigint purchase_id FK "UK with item_id"
+        bigint item_id FK
+        qty qty
+        rate rate "per base unit"
+        money amount
+    }
+    PRODUCTION_RUN {
+        bigint id PK
+        varchar run_no UK "RUN/2026-27/0001"
+        bigint bom_id FK "version used"
+        date run_date
+        numeric batches "(10,4), above 0"
+        qty planned_output "output_qty x batches"
+        qty actual_output "good packets"
+        varchar status "DRAFT POSTED CANCELLED REVERSED"
+        timestamptz posted_at
+        bigint posted_by FK "app_user"
+        timestamptz reversed_at
+        bigint reversed_by FK "app_user"
+        bigint created_by FK "app_user"
+    }
+    PRODUCTION_CONSUMPTION {
+        bigint id PK
+        bigint run_id FK "UK with item_id"
+        bigint item_id FK
+        qty planned_qty "standard, copied from BOM"
+        qty actual_qty "issued, incl. scrap"
+        qty scrap_qty "damaged, within actual"
+        rate unit_cost "WAC at issue"
+    }
+    OVERHEAD_ENTRY {
+        bigint id PK
+        bigint run_id FK "either run_id"
+        date period_month "or month"
+        varchar type "LABOUR POWER_GAS OTHER"
+        money amount
+        varchar note
+        bigint created_by FK "app_user"
+    }
+    SALES_ORDER {
+        bigint id PK
+        varchar order_no UK "SO/2026-27/0001"
+        uuid client_uuid UK "safe offline resubmit"
+        bigint customer_id FK
+        bigint salesman_id FK
+        date order_date
+        varchar status "SUBMITTED APPROVED REJECTED INVOICED DISPATCHED CANCELLED"
+        bigint approved_by FK "app_user"
+        timestamptz approved_at
+        varchar remarks
+    }
+    SALES_ORDER_LINE {
+        bigint id PK
+        bigint order_id FK "UK with item_id"
+        bigint item_id FK
+        qty qty "ordered, packets"
+        money rate "price copied at order"
+        qty approved_qty "at most qty; less on shortage"
+    }
+    INVOICE_SEQUENCE {
+        varchar doc_type PK "INVOICE CREDIT_NOTE PRODUCTION_RUN SALES_ORDER DISPATCH"
+        varchar financial_year PK "2026-27"
+        varchar prefix "INV CN RUN SO DC"
+        int next_number "row locked when issuing"
+    }
+    INVOICE {
+        bigint id PK
+        varchar invoice_no UK "INV/2026-27/0001"
+        varchar financial_year
+        date invoice_date
+        bigint order_id FK "UK, one invoice per order"
+        bigint customer_id FK
+        varchar status "POSTED CANCELLED"
+        varchar seller_name "copied from company"
+        varchar seller_gstin "copied"
+        varchar seller_state_code "copied"
+        text seller_address "copied"
+        varchar buyer_name "copied from customer"
+        varchar buyer_gstin "copied, NULL for B2C"
+        text buyer_address "copied"
+        varchar place_of_supply "buyer state at invoicing"
+        varchar supply_type "INTRA or INTER"
+        money taxable_value
+        money cgst "INTRA only"
+        money sgst "INTRA only"
+        money igst "INTER only"
+        money total "= taxable + taxes"
+        bigint created_by FK "app_user"
+    }
+    INVOICE_LINE {
+        bigint id PK
+        bigint invoice_id FK "UK with item_id"
+        bigint item_id FK
+        varchar item_name "copied"
+        varchar hsn_code "copied"
+        qty qty
+        money rate "copied"
+        money taxable_value
+        pct gst_rate "copied"
+        money cgst
+        money sgst
+        money igst
+    }
+    CREDIT_NOTE {
+        bigint id PK
+        varchar note_no UK "CN/2026-27/0001"
+        bigint invoice_id FK "UK, cancels the whole invoice"
+        date note_date
+        varchar reason
+        varchar supply_type "as the invoice"
+        money taxable_value
+        money cgst
+        money sgst
+        money igst
+        money total
+        bigint created_by FK "app_user"
+    }
+    DISPATCH {
+        bigint id PK
+        varchar dispatch_no UK "DC/2026-27/0001"
+        bigint invoice_id FK
+        date dispatch_date
+        varchar vehicle_no
+        bigint created_by FK "app_user"
+    }
+    DISPATCH_LINE {
+        bigint id PK
+        bigint dispatch_id FK "UK with item_id"
+        bigint item_id FK
+        qty qty "actually shipped"
+    }
+    PAYMENT {
+        bigint id PK
+        bigint customer_id FK
+        date received_on
+        money amount
+        varchar mode "CASH UPI BANK CHEQUE"
+        varchar reference
+        varchar status "POSTED REVERSED"
+        timestamptz reversed_at
+        bigint reversed_by FK "app_user"
+        bigint created_by FK "app_user"
+    }
+    PAYMENT_ALLOCATION {
+        bigint id PK
+        bigint payment_id FK "UK with invoice_id"
+        bigint invoice_id FK
+        money amount "above 0"
+    }
+    STOCK_ADJUSTMENT {
+        bigint id PK
+        bigint item_id FK
+        date adjustment_date
+        qty qty "signed, not 0"
+        varchar reason "required"
+        bigint created_by FK "app_user"
+    }
+    STOCK_MOVEMENT {
+        bigint id PK
+        bigint item_id FK
+        timestamptz movement_date
+        varchar movement_type "in: OPENING RECEIPT PRODUCTION_OUTPUT RETURN; out: ISSUE SALE; either: ADJUSTMENT REVERSAL"
+        qty qty "signed: + in, - out"
+        rate unit_cost "WAC at posting"
+        money value "qty x unit_cost, same sign"
+        varchar source_type "OPENING PURCHASE PRODUCTION_RUN DISPATCH CREDIT_NOTE ADJUSTMENT"
+        bigint source_id "no FK; NULL only for OPENING"
+        varchar batch_no "unused, stretch goal"
+        varchar remarks
+        bigint created_by FK "app_user"
+    }
+    AUDIT_LOG {
+        bigint id PK
+        varchar entity_type
+        bigint entity_id "NULL for a failed login"
+        varchar action "CREATE UPDATE APPROVE REJECT CANCEL POST REVERSE DISPATCH PAYMENT LOGIN LOGIN_FAILED"
+        jsonb before_data
+        jsonb after_data
+        bigint user_id FK "NULL for an unknown user"
+        varchar username "copied"
+        timestamptz at
+    }

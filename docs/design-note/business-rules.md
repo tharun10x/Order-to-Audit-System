@@ -596,7 +596,7 @@ The database refuses bad data even if the code is wrong; each constraint has a t
 - **Units.** Every item has one base unit (kg, litre, piece, packet). `uom.factor_to_base` converts g→kg and ml→L, and `item_uom_conversion` converts carton→20 packets for that item (section 3).
 - **Snapshots.** Order lines copy the price, and `production_consumption` copies the BOM standard (`planned_qty`). The invoice copies the seller and buyer details, and each invoice line the item name, HSN, price and tax (R10.5).
 - **Money and quantity** are `NUMERIC` (qty 14,4; money 14,2; rate 14,4; percentage 5,2) in the database and `BigDecimal` in Java, rounded `HALF_UP` (section 4).
-- **The diagram** omits the user-tracking foreign keys to `app_user` (`created_by` on every document, `approved_by` on orders, `posted_by` on runs, `reversed_by` on purchases, runs and payments). `stock_movement.source_type` + `source_id` point to the source document without a foreign key, because the source table varies.
+- **The diagrams.** The design note shows an overview (relationships, and the columns of four key tables). The full ERD, [`docs/er-diagram/er-diagram.mmd`](../er-diagram/er-diagram.mmd) rendered to PNG and SVG, lists every column of every table in V1–V3 except `created_at`, including the user-tracking foreign keys to `app_user` (`created_by` on every document, `approved_by` on orders, `posted_by` on runs, `reversed_by` on purchases, runs and payments), which are drawn as lines only where they carry business meaning (the salesman, the audit user). `stock_movement.source_type` + `source_id` point to the source document without a foreign key, because the source table varies.
 
 ### Stock details
 
