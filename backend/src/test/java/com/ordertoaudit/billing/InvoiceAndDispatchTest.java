@@ -231,8 +231,8 @@ class InvoiceAndDispatchTest extends AbstractSalesTest {
     void aSalesmanSeesOnlyTheInvoicesOfTheirCustomers() {
         InvoiceResponse invoice = retailerInvoice();
 
-        assertThat(invoiceService.list(user("salesman_a"))).hasSize(1);
-        assertThat(invoiceService.list(user("salesman_b"))).isEmpty();
+        assertThat(invoiceService.list(null, null, null, user("salesman_a"))).hasSize(1);
+        assertThat(invoiceService.list(null, null, null, user("salesman_b"))).isEmpty();
         assertThatThrownBy(() -> invoiceService.get(invoice.id(), user("salesman_b")))
                 .isInstanceOf(NotFoundException.class);
         assertThatThrownBy(() -> pdfService.pdf(invoice.id(), user("salesman_b")))

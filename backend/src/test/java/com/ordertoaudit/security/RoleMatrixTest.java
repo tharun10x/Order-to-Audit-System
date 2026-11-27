@@ -84,7 +84,9 @@ class RoleMatrixTest extends AbstractLedgerTest {
     static List<Endpoint> endpoints() {
         return List.of(
                 get("/api/auth/me", 200, EVERYONE),
-                get("/api/customers", 200, ORDER_ENTRY),
+                get("/api/customers", 200, ORDER_READ),   // H9: auditor and owner too, read-only
+                get("/api/suppliers", 200, PURCHASE_ENTRY),
+                get("/api/items", 200, OPERATIONS_READ),
                 get("/api/products", 200, ORDER_ENTRY),
 
                 send("POST", "/api/orders", """

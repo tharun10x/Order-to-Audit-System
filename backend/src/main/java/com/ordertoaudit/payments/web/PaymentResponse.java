@@ -11,6 +11,7 @@ import com.ordertoaudit.payments.entity.PaymentStatus;
 public record PaymentResponse(
         Long id,
         Long customerId,
+        String customerName,
         LocalDate receivedOn,
         BigDecimal amount,
         PaymentMode mode,

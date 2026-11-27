@@ -23,7 +23,7 @@ public class CustomerController {
         this.currentUser = currentUser;
     }
 
-    @PreAuthorize(Roles.ORDER_ENTRY)
+    @PreAuthorize(Roles.CUSTOMER_READ)
     @GetMapping
     public List<CustomerResponse> list() {
         return customerService.list(currentUser.current());

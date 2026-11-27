@@ -191,11 +191,12 @@ public class InvoiceService {
 
     /** R2.2: a salesman sees the invoices of their own customers. */
     @Transactional(readOnly = true)
-    public List<InvoiceResponse> list(AppUser user) {
-        List<Invoice> invoices = user.getRole() == UserRole.SALESMAN
-                ? invoiceRepository.findByCustomerSalesmanIdOrderByIdDesc(user.getId())
-                : invoiceRepository.findAllByOrderByIdDesc();
-        return invoices.stream().map(this::toResponse).toList();
+    public List<InvoiceResponse> list(InvoiceStatus status, LocalDate from, LocalDate to, AppUser user) {
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new BadRequestException("'from' (" + from + ") must not be after 'to' (" + to + ")");
+        }
+        Long salesmanId = user.getRole() == UserRole.SALESMAN ? user.getId() : null;
+        return invoiceRepository.search(status, from, to, salesmanId).stream().map(this::toResponse).toList();
     }
 
     /** R10.5: copy what is printed, so editing a master record later never changes this invoice. */
@@ -297,6 +298,13 @@ public class InvoiceService {
             outstanding = Money.money(snapshot.getOutstanding());
             paymentStatus = InvoicePaymentStatus.of(paid, outstanding);
         }
+        List<InvoiceResponse.Payment> payments = paymentRepository.findAllocationsForInvoice(invoice.getId()).stream()
+                .map(allocation -> new InvoiceResponse.Payment(allocation.getPayment().getId(),
+                        allocation.getPayment().getReceivedOn(), allocation.getPayment().getMode(),
+                        allocation.getPayment().getReference(), allocation.getAmount(),
+                        allocation.getPayment().getStatus()))
+                .toList();
+        Dispatch dispatch = dispatchRepository.findByInvoiceId(invoice.getId()).orElse(null);
         List<InvoiceResponse.Line> lines = invoice.getLines().stream()
                 .map(line -> new InvoiceResponse.Line(line.getItem().getCode(), line.getItemName(), line.getHsnCode(),
                         line.getQty(), line.getRate(), line.getTaxableValue(), line.getGstRate(),
@@ -309,10 +317,12 @@ public class InvoiceService {
                 new InvoiceResponse.Party(invoice.getBuyerName(), invoice.getBuyerGstin(),
                         invoice.getPlaceOfSupply(), invoice.getBuyerAddress()),
                 invoice.getPlaceOfSupply(), invoice.getSupplyType(), invoice.getTaxableValue(),
-                invoice.getCgst(), invoice.getSgst(), invoice.getIgst(), invoice.getTotal(), invoice.getStatus(),
+                invoice.getCgst(), invoice.getSgst(), invoice.getIgst(),
+                invoice.getCgst().add(invoice.getSgst()).add(invoice.getIgst()), invoice.getTotal(), invoice.getStatus(),
                 creditNoteRepository.findByInvoiceId(invoice.getId()).map(CreditNote::getNoteNo).orElse(null),
-                dispatchRepository.findByInvoiceId(invoice.getId()).map(Dispatch::getDispatchNo).orElse(null),
-                paid, outstanding, paymentStatus, lines);
+                dispatch == null ? null : dispatch.getDispatchNo(),
+                dispatch == null ? null : dispatch.getDispatchDate(),
+                paid, outstanding, paymentStatus, payments, lines);
     }
 
     private Map<String, Object> statusData(String orderNo, OrderStatus status) {

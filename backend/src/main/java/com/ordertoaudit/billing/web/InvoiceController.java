@@ -1,7 +1,9 @@
 package com.ordertoaudit.billing.web;
 
+import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -13,9 +15,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ordertoaudit.billing.entity.InvoiceStatus;
 import com.ordertoaudit.billing.service.InvoicePdf;
 import com.ordertoaudit.billing.service.InvoicePdfService;
 import com.ordertoaudit.billing.service.InvoiceService;
@@ -48,8 +52,11 @@ public class InvoiceController {
 
     @PreAuthorize(Roles.ACCOUNTS_READ)
     @GetMapping
-    public List<InvoiceResponse> list() {
-        return invoiceService.list(currentUser.current());
+    public List<InvoiceResponse> list(
+            @RequestParam(required = false) InvoiceStatus status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return invoiceService.list(status, from, to, currentUser.current());
     }
 
     @PreAuthorize(Roles.ACCOUNTS_READ)

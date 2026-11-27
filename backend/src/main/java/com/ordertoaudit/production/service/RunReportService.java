@@ -63,9 +63,12 @@ public class RunReportService {
     public List<RunSummaryResponse> list(LocalDate from, LocalDate to) {
         LocalDate start = (from == null) ? LocalDate.of(1900, 1, 1) : from;
         LocalDate end = (to == null) ? LocalDate.of(2999, 12, 31) : to;
+        // The same report as the run screen, so the list and the run can never disagree
         return runRepository.findByRunDateBetweenOrderByRunDateAscIdAsc(start, end).stream()
-                .map(r -> new RunSummaryResponse(r.getId(), r.getRunNo(), r.getBom().getProduct().getCode(),
-                        r.getRunDate(), r.getStatus(), r.getBatches(), r.getPlannedOutput(), r.getActualOutput()))
+                .map(this::build)
+                .map(r -> new RunSummaryResponse(r.id(), r.runNo(), r.productCode(), r.runDate(), r.status(),
+                        r.batches(), r.plannedOutput(), r.actualOutput(), r.yieldVariancePct(), r.yieldFlagged(),
+                        r.costing() == null ? null : r.costing().costPerPacketRounded()))
                 .toList();
     }
 
@@ -110,7 +113,8 @@ public class RunReportService {
         BigDecimal variance = variance(c.getPlannedQty(), c.getActualQty());
         boolean flagged = isFlagged(c.getPlannedQty(), c.getActualQty(), variance, tolerance);
         Item item = c.getItem();
-        return new RunResponse.Line(item.getCode(), item.getName(), item.getKind(), c.getPlannedQty(),
+        return new RunResponse.Line(item.getCode(), item.getName(), item.getKind(), item.getBaseUom().getCode(),
+                c.getPlannedQty(),
                 c.getActualQty(), c.getScrapQty(), c.getUnitCost(), value, variance, flagged);
     }
 

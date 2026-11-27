@@ -20,6 +20,9 @@ public final class Roles {
     /** A salesman sees only their own orders: the service filters them (R2.2). */
     public static final String ORDER_READ = "hasAnyRole('SALESMAN', 'ADMIN', 'AUDITOR', 'OWNER')";
 
+    /** The customer list: order takers, and the read-only roles (to look up outstanding). */
+    public static final String CUSTOMER_READ = "hasAnyRole('SALESMAN', 'ADMIN', 'AUDITOR', 'OWNER')";
+
     /** Invoices, payments and receivables. Auditor and Owner can only read (R2.3). */
     public static final String ACCOUNTS_READ = "hasAnyRole('ADMIN', 'AUDITOR', 'OWNER')";
 

@@ -1,6 +1,5 @@
 package com.ordertoaudit.payments.repository;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,7 +16,4 @@ public interface InvoiceOutstandingRepository extends JpaRepository<InvoiceOutst
      */
     @Query("select o.paid as paid, o.outstanding as outstanding from InvoiceOutstanding o where o.invoiceId = :invoiceId")
     Optional<PaidSnapshot> snapshot(@Param("invoiceId") Long invoiceId);
-
-    /** Oldest first, the order in which dues are normally collected. */
-    List<InvoiceOutstanding> findByCustomerIdOrderByInvoiceDateAscInvoiceIdAsc(Long customerId);
 }

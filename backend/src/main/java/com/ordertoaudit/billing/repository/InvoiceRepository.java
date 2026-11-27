@@ -1,5 +1,6 @@
 package com.ordertoaudit.billing.repository;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -10,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.ordertoaudit.billing.entity.Invoice;
+import com.ordertoaudit.billing.entity.InvoiceStatus;
 
 import jakarta.persistence.LockModeType;
 
@@ -31,8 +33,17 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     @Query("select i from Invoice i where i.id in :ids order by i.id asc")
     List<Invoice> lockAllByIdOrderById(@Param("ids") Collection<Long> ids);
 
-    List<Invoice> findAllByOrderByIdDesc();
-
-    /** R2.2: sales for the customers assigned to one salesman. */
-    List<Invoice> findByCustomerSalesmanIdOrderByIdDesc(Long salesmanId);
+    /**
+     * Newest first. Every filter is optional (null means any). salesmanId limits it to that salesman's customers
+     * (R2.2). The casts tell PostgreSQL the type of a date left out, which it cannot work out from "? is null".
+     */
+    @Query("""
+            select i from Invoice i
+            where (:status is null or i.status = :status)
+              and (cast(:from as LocalDate) is null or i.invoiceDate >= :from)
+              and (cast(:to as LocalDate) is null or i.invoiceDate <= :to)
+              and (:salesmanId is null or i.customer.salesman.id = :salesmanId)
+            order by i.id desc""")
+    List<Invoice> search(@Param("status") InvoiceStatus status, @Param("from") LocalDate from,
+                         @Param("to") LocalDate to, @Param("salesmanId") Long salesmanId);
 }

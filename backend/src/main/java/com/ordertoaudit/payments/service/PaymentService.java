@@ -25,7 +25,6 @@ import com.ordertoaudit.masters.entity.AppUser;
 import com.ordertoaudit.masters.entity.Customer;
 import com.ordertoaudit.masters.entity.UserRole;
 import com.ordertoaudit.masters.repository.CustomerRepository;
-import com.ordertoaudit.payments.entity.InvoiceOutstanding;
 import com.ordertoaudit.payments.entity.InvoicePaymentStatus;
 import com.ordertoaudit.payments.entity.Payment;
 import com.ordertoaudit.payments.entity.PaymentAllocation;
@@ -47,16 +46,19 @@ public class PaymentService {
     private final CustomerRepository customerRepository;
     private final AuditService auditService;
     private final Clock businessClock;
+    private final OutstandingCalculator outstandingCalculator;
 
     public PaymentService(PaymentRepository paymentRepository, InvoiceRepository invoiceRepository,
                           InvoiceOutstandingRepository outstandingRepository, CustomerRepository customerRepository,
-                          AuditService auditService, Clock businessClock) {
+                          AuditService auditService, Clock businessClock,
+                          OutstandingCalculator outstandingCalculator) {
         this.paymentRepository = paymentRepository;
         this.invoiceRepository = invoiceRepository;
         this.outstandingRepository = outstandingRepository;
         this.customerRepository = customerRepository;
         this.auditService = auditService;
         this.businessClock = businessClock;
+        this.outstandingCalculator = outstandingCalculator;
     }
 
     /**
@@ -104,26 +106,34 @@ public class PaymentService {
         return paymentRepository.findAllByOrderByReceivedOnDescIdDesc().stream().map(this::toResponse).toList();
     }
 
-    /** R12.4: the sum of the customer's invoice outstanding. A salesman sees only their own customers (R2.2). */
+    /**
+     * R12.4: what the customer owes today, with ageing. OutstandingCalculator is the same calculation as the
+     * outstanding report, so this screen and the report always agree. A salesman sees only their own customers (R2.2).
+     */
     @Transactional(readOnly = true)
     public CustomerOutstandingResponse customerOutstanding(Long customerId, AppUser user) {
         Customer customer = customerRepository.findById(customerId)
                 .filter(c -> user.getRole() != UserRole.SALESMAN || c.isAssignedTo(user))
                 .orElseThrow(() -> new NotFoundException("Customer " + customerId + " not found"));
+        LocalDate asOf = LocalDate.now(businessClock);
 
+        Map<String, BigDecimal> buckets = new LinkedHashMap<>();
+        for (String bucket : OutstandingCalculator.BUCKETS) {
+            buckets.put(bucket, Money.money(BigDecimal.ZERO));
+        }
         List<CustomerOutstandingResponse.Invoice> invoices = new ArrayList<>();
         BigDecimal total = Money.money(BigDecimal.ZERO);
-        for (InvoiceOutstanding row : outstandingRepository
-                .findByCustomerIdOrderByInvoiceDateAscInvoiceIdAsc(customerId)) {
-            if (row.getOutstanding().signum() > 0) {
-                total = total.add(row.getOutstanding());
-                invoices.add(new CustomerOutstandingResponse.Invoice(row.getInvoiceId(), row.getInvoiceNo(),
-                        row.getInvoiceDate(), row.getTotal(), Money.money(row.getPaid()),
-                        Money.money(row.getOutstanding()),
-                        InvoicePaymentStatus.of(row.getPaid(), row.getOutstanding())));
+        for (OutstandingCalculator.InvoiceDue due : outstandingCalculator.asOf(asOf)) {
+            if (!due.customerId().equals(customerId)) {
+                continue;
             }
+            total = total.add(due.outstanding());
+            buckets.merge(due.bucket(), due.outstanding(), BigDecimal::add);
+            invoices.add(new CustomerOutstandingResponse.Invoice(due.invoiceId(), due.invoiceNo(), due.invoiceDate(),
+                    due.total(), due.paid(), due.outstanding(), InvoicePaymentStatus.of(due.paid(), due.outstanding()),
+                    due.days(), due.bucket()));
         }
-        return new CustomerOutstandingResponse(customer.getId(), customer.getName(), total, invoices);
+        return new CustomerOutstandingResponse(customer.getId(), customer.getName(), asOf, total, buckets, invoices);
     }
 
     /** R12.6: each invoice once, and the parts add up exactly to the amount (no advances). */
@@ -188,7 +198,8 @@ public class PaymentService {
         List<PaymentResponse.Allocation> allocations = payment.getAllocations().stream()
                 .map(this::toResponse)
                 .toList();
-        return new PaymentResponse(payment.getId(), payment.getCustomer().getId(), payment.getReceivedOn(),
+        return new PaymentResponse(payment.getId(), payment.getCustomer().getId(), payment.getCustomer().getName(),
+                payment.getReceivedOn(),
                 payment.getAmount(), payment.getMode(), payment.getReference(), payment.getStatus(), allocations);
     }
 

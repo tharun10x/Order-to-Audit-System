@@ -5,7 +5,10 @@ import java.time.LocalDate;
 
 import com.ordertoaudit.production.entity.RunStatus;
 
-/** One row of GET /api/production-runs. */
+/**
+ * One row of GET /api/production-runs. yieldVariancePct is null until the good output is entered; costPerPacket
+ * (2 decimals, overheads included, R13.5) is null until the run is posted.
+ */
 public record RunSummaryResponse(
         Long id,
         String runNo,
@@ -14,5 +17,8 @@ public record RunSummaryResponse(
         RunStatus status,
         BigDecimal batches,
         BigDecimal plannedOutput,
-        BigDecimal actualOutput) {
+        BigDecimal actualOutput,
+        BigDecimal yieldVariancePct,
+        boolean yieldFlagged,
+        BigDecimal costPerPacket) {
 }

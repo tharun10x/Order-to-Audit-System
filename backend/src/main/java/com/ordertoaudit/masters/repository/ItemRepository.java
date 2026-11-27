@@ -20,6 +20,8 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
 
     List<Item> findByKindAndActiveTrueOrderByNameAsc(ItemKind kind);
 
+    List<Item> findByActiveTrueOrderByKindAscCodeAsc();
+
     /**
      * R6.7: locks the item rows (SELECT ... FOR UPDATE). The ORDER BY makes every transaction
      * take the locks in ascending id order, so two transactions cannot deadlock on each other.

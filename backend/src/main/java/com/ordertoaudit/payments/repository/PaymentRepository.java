@@ -7,10 +7,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.ordertoaudit.payments.entity.Payment;
+import com.ordertoaudit.payments.entity.PaymentAllocation;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     List<Payment> findAllByOrderByReceivedOnDescIdDesc();
+
+    /** The allocations to one invoice, oldest payment first, with their payments. */
+    @Query("""
+            select a from PaymentAllocation a join fetch a.payment p
+            where a.invoice.id = :invoiceId order by p.receivedOn, p.id""")
+    List<PaymentAllocation> findAllocationsForInvoice(@Param("invoiceId") Long invoiceId);
 
     /** R10.6: an invoice with money from a POSTED payment cannot be cancelled. */
     @Query("""

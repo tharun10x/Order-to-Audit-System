@@ -17,6 +17,8 @@ public record PurchaseResponse(
         BigDecimal total,
         List<Line> lines) {
 
-    public record Line(String itemCode, BigDecimal qty, BigDecimal rate, BigDecimal amount) {
+    /** qty and rate are in unit, the item's base unit. */
+    public record Line(String itemCode, String itemName, BigDecimal qty, String unit, BigDecimal rate,
+                       BigDecimal amount) {
     }
 }

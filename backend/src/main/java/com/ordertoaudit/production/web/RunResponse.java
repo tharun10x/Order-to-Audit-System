@@ -39,6 +39,8 @@ public record RunResponse(
             String itemCode,
             String itemName,
             ItemKind kind,
+            /** The base unit of plannedQty, actualQty and scrapQty. */
+            String unit,
             BigDecimal plannedQty,
             BigDecimal actualQty,
             BigDecimal scrapQty,

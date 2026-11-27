@@ -1,7 +1,9 @@
-package com.ordertoaudit.reports.service;
+package com.ordertoaudit.payments.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -18,7 +20,8 @@ import com.ordertoaudit.common.Money;
  *  - invoices dated on or before that day,
  *  - minus those cancelled by a credit note dated on or before that day,
  *  - less the allocations of payments received on or before that day that were not yet reversed by its end.
- * For today it gives the same figures as the view.
+ * For today it gives the same figures as the view. The customer outstanding screen, the outstanding report, my-sales
+ * and the dashboard all use this one calculation, so they always agree.
  */
 @Component
 public class OutstandingCalculator {
@@ -63,7 +66,8 @@ public class OutstandingCalculator {
     /** Only invoices with something still to pay. */
     @Transactional(propagation = Propagation.MANDATORY)
     public List<InvoiceDue> asOf(LocalDate asOf) {
-        Object endOfDay = ReportPeriod.sqlTimestamp(asOf.plusDays(1).atStartOfDay(Money.ZONE).toInstant());
+        // The driver binds OffsetDateTime, not Instant, for a TIMESTAMPTZ parameter
+        OffsetDateTime endOfDay = OffsetDateTime.ofInstant(asOf.plusDays(1).atStartOfDay(Money.ZONE).toInstant(), ZoneOffset.UTC);
         return jdbc.sql(QUERY).param("asOf", asOf).param("endOfDay", endOfDay)
                 .query(Row.class).list().stream()
                 .map(row -> new InvoiceDue(row.invoiceId(), row.invoiceNo(), row.invoiceDate(), row.customerId(),
@@ -74,7 +78,7 @@ public class OutstandingCalculator {
                 .toList();
     }
 
-    static String bucketOf(long days) {
+    public static String bucketOf(long days) {
         if (days <= 30) {
             return BUCKETS.get(0);
         }

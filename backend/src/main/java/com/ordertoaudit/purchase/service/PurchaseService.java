@@ -140,7 +140,8 @@ public class PurchaseService {
     private PurchaseResponse toResponse(Purchase purchase) {
         List<PurchaseResponse.Line> lines = purchase.getLines().stream()
                 .sorted(Comparator.comparing(l -> l.getItem().getCode()))
-                .map(l -> new PurchaseResponse.Line(l.getItem().getCode(), l.getQty(), l.getRate(), l.getAmount()))
+                .map(l -> new PurchaseResponse.Line(l.getItem().getCode(), l.getItem().getName(), l.getQty(),
+                        l.getItem().getBaseUom().getCode(), l.getRate(), l.getAmount()))
                 .toList();
         BigDecimal total = lines.stream().map(PurchaseResponse.Line::amount).reduce(BigDecimal.ZERO, BigDecimal::add);
         return new PurchaseResponse(purchase.getId(), purchase.getSupplier().getId(), purchase.getSupplier().getName(),

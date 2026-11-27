@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ordertoaudit.common.Money;
 import com.ordertoaudit.common.error.BadRequestException;
+import com.ordertoaudit.inventory.service.SourceDocuments;
 import com.ordertoaudit.masters.entity.AppUser;
 import com.ordertoaudit.masters.entity.Item;
 import com.ordertoaudit.masters.repository.ItemRepository;
@@ -33,24 +35,10 @@ public class StockLedgerReport {
             FROM stock_movement m
             WHERE m.item_id = :itemId AND %s""".formatted(StockSummaryReport.OPENING);
 
-    /** A REVERSAL keeps the source of the document it undoes (R6), so it shows that document too. */
+    /** The document text comes from SourceDocuments, the same as the stock ledger screen. */
     private static final String MOVEMENTS = """
-            SELECT m.movement_date, m.movement_type, m.qty, m.unit_cost, m.value,
-                   CASE m.source_type
-                       WHEN 'PURCHASE'       THEN 'Bill ' || p.bill_no || ' (' || s.name || ')'
-                       WHEN 'PRODUCTION_RUN' THEN r.run_no
-                       WHEN 'DISPATCH'       THEN d.dispatch_no || ' / ' || di.invoice_no
-                       WHEN 'CREDIT_NOTE'    THEN cn.note_no
-                       WHEN 'ADJUSTMENT'     THEN 'Adjustment ' || m.source_id
-                       ELSE 'Opening stock'
-                   END AS reference
+            SELECT m.id, m.movement_date, m.movement_type, m.qty, m.unit_cost, m.value
             FROM stock_movement m
-            LEFT JOIN purchase p        ON m.source_type = 'PURCHASE'       AND p.id = m.source_id
-            LEFT JOIN supplier s        ON s.id = p.supplier_id
-            LEFT JOIN production_run r  ON m.source_type = 'PRODUCTION_RUN' AND r.id = m.source_id
-            LEFT JOIN dispatch d        ON m.source_type = 'DISPATCH'       AND d.id = m.source_id
-            LEFT JOIN invoice di        ON di.id = d.invoice_id
-            LEFT JOIN credit_note cn    ON m.source_type = 'CREDIT_NOTE'    AND cn.id = m.source_id
             WHERE m.item_id = :itemId AND m.movement_type <> 'OPENING'
               AND m.movement_date >= :start AND m.movement_date < :end
             ORDER BY m.movement_date, m.id""";
@@ -58,17 +46,20 @@ public class StockLedgerReport {
     private record Balance(BigDecimal qty, BigDecimal value) {
     }
 
-    private record Movement(OffsetDateTime movementDate, String movementType, BigDecimal qty, BigDecimal unitCost,
-                            BigDecimal value, String reference) {
+    private record Movement(Long id, OffsetDateTime movementDate, String movementType, BigDecimal qty,
+                            BigDecimal unitCost, BigDecimal value) {
     }
 
     private final JdbcClient jdbc;
     private final ItemRepository itemRepository;
+    private final SourceDocuments sourceDocuments;
     private final ReportAssembler assembler;
 
-    public StockLedgerReport(JdbcClient jdbc, ItemRepository itemRepository, ReportAssembler assembler) {
+    public StockLedgerReport(JdbcClient jdbc, ItemRepository itemRepository, SourceDocuments sourceDocuments,
+                             ReportAssembler assembler) {
         this.jdbc = jdbc;
         this.itemRepository = itemRepository;
+        this.sourceDocuments = sourceDocuments;
         this.assembler = assembler;
     }
 
@@ -83,6 +74,8 @@ public class StockLedgerReport {
                 .query(Balance.class).single();
         List<Movement> movements = jdbc.sql(MOVEMENTS).param("itemId", item.getId()).param("start", start)
                 .param("end", end).query(Movement.class).list();
+        Map<Long, SourceDocuments.SourceDocument> documents =
+                sourceDocuments.forMovements(movements.stream().map(Movement::id).toList());
 
         ReportTable.Builder table = ReportTable.builder("Movements of " + item.getCode())
                 .column("date", "Date", ColumnType.DATE)
@@ -109,7 +102,7 @@ public class StockLedgerReport {
             totalIn = (in == null) ? totalIn : totalIn.add(in);
             totalOut = (out == null) ? totalOut : totalOut.add(out);
             LocalDate date = m.movementDate().atZoneSameInstant(Money.ZONE).toLocalDate();
-            table.row(date, m.movementType(), m.reference(), in, out, m.unitCost(), m.value(), qty, value);
+            table.row(date, m.movementType(), documents.get(m.id()).documentNo(), in, out, m.unitCost(), m.value(), qty, value);
         }
         table.totals(period.to(), "Closing balance", null, totalIn, totalOut, null, null, qty, value);
 
