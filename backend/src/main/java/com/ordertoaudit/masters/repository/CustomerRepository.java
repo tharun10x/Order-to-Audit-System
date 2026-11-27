@@ -14,9 +14,13 @@ import jakarta.persistence.LockModeType;
 
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
-    List<Customer> findByActiveTrueOrderByNameAsc();
-
     List<Customer> findBySalesmanIdAndActiveTrueOrderByNameAsc(Long salesmanId);
+
+    List<Customer> findAllByOrderByNameAsc();
+
+    List<Customer> findBySalesmanIdOrderByNameAsc(Long salesmanId);
+
+    boolean existsByCode(String code);
 
     /** SELECT ... FOR UPDATE: new orders for one customer are created one at a time (R9.7). */
     @Lock(LockModeType.PESSIMISTIC_WRITE)

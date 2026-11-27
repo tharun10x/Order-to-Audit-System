@@ -274,7 +274,7 @@ public class SalesOrderService {
     }
 
     private OrderResponse toResponse(SalesOrder order) {
-        return OrderResponse.from(order, orderRepository.findInvoiceNo(order.getId()).orElse(null));
+        return OrderResponse.from(order, orderRepository.findInvoice(order.getId()).orElse(null));
     }
 
     /** One query for all the invoice numbers of a list. */
@@ -282,12 +282,12 @@ public class SalesOrderService {
         if (orders.isEmpty()) {
             return List.of();
         }
-        Map<Long, String> invoiceNos = new HashMap<>();
+        Map<Long, SalesOrderRepository.OrderInvoice> invoices = new HashMap<>();
         for (SalesOrderRepository.OrderInvoice row
-                : orderRepository.findInvoiceNos(orders.stream().map(SalesOrder::getId).toList())) {
-            invoiceNos.put(row.getOrderId(), row.getInvoiceNo());
+                : orderRepository.findInvoices(orders.stream().map(SalesOrder::getId).toList())) {
+            invoices.put(row.getOrderId(), row);
         }
-        return orders.stream().map(order -> OrderResponse.from(order, invoiceNos.get(order.getId()))).toList();
+        return orders.stream().map(order -> OrderResponse.from(order, invoices.get(order.getId()))).toList();
     }
 
     /** The quantity to approve per item code: what the admin entered, otherwise the full ordered quantity. */

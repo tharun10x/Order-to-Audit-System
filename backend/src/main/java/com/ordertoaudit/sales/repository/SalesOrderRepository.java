@@ -25,19 +25,23 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long> {
 
     Optional<SalesOrder> findByClientUuid(UUID clientUuid);
 
-    /** The order's invoice number (also once cancelled). SQL, so the sales package needs no billing classes. */
-    @Query(value = "SELECT invoice_no FROM invoice WHERE order_id = :orderId", nativeQuery = true)
-    Optional<String> findInvoiceNo(@Param("orderId") Long orderId);
-
+    /** An order's invoice (also once cancelled): its id and number. */
     interface OrderInvoice {
         Long getOrderId();
+
+        Long getInvoiceId();
 
         String getInvoiceNo();
     }
 
-    @Query(value = "SELECT order_id AS orderId, invoice_no AS invoiceNo FROM invoice WHERE order_id IN (:orderIds)",
+    /** SQL, so the sales package needs no billing classes. */
+    @Query(value = "SELECT order_id AS orderId, id AS invoiceId, invoice_no AS invoiceNo FROM invoice WHERE order_id = :orderId",
             nativeQuery = true)
-    List<OrderInvoice> findInvoiceNos(@Param("orderIds") Collection<Long> orderIds);
+    Optional<OrderInvoice> findInvoice(@Param("orderId") Long orderId);
+
+    @Query(value = "SELECT order_id AS orderId, id AS invoiceId, invoice_no AS invoiceNo FROM invoice WHERE order_id IN (:orderIds)",
+            nativeQuery = true)
+    List<OrderInvoice> findInvoices(@Param("orderIds") Collection<Long> orderIds);
 
     List<SalesOrder> findAllByOrderByIdDesc();
 

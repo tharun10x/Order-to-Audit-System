@@ -72,13 +72,18 @@ class RoleMatrixTest extends AbstractLedgerTest {
         }
     }
 
+    /** {id} and {code} point at records that do not exist. */
+    private static String url(String pattern) {
+        return pattern.replace("{id}", "999999").replace("{code}", "NOPE");
+    }
+
     private static Endpoint get(String pattern, int statusWhenAllowed, Set<UserRole> allowed) {
-        return new Endpoint("GET", pattern, pattern.replace("{id}", "999999"), null, statusWhenAllowed, allowed);
+        return new Endpoint("GET", pattern, url(pattern), null, statusWhenAllowed, allowed);
     }
 
     private static Endpoint send(String method, String pattern, String body, int statusWhenAllowed,
                                  Set<UserRole> allowed) {
-        return new Endpoint(method, pattern, pattern.replace("{id}", "999999"), body, statusWhenAllowed, allowed);
+        return new Endpoint(method, pattern, url(pattern), body, statusWhenAllowed, allowed);
     }
 
     static List<Endpoint> endpoints() {
@@ -88,6 +93,29 @@ class RoleMatrixTest extends AbstractLedgerTest {
                 get("/api/suppliers", 200, PURCHASE_ENTRY),
                 get("/api/items", 200, OPERATIONS_READ),
                 get("/api/products", 200, ORDER_ENTRY),
+
+                // Masters (R5): the Admin changes them. The bodies are refused before anything is saved.
+                send("POST", "/api/customers", """
+                        {"code": "RM-1", "name": "X", "type": "RETAILER", "stateCode": "33", "salesmanId": 999999}""",
+                        400, ADMIN),
+                send("PUT", "/api/customers/{id}", """
+                        {"name": "X", "type": "RETAILER", "stateCode": "33", "salesmanId": 999999}""", 404, ADMIN),
+                send("POST", "/api/customers/{id}/deactivate", null, 404, ADMIN),
+                send("POST", "/api/customers/{id}/reactivate", null, 404, ADMIN),
+                get("/api/salesmen", 200, ADMIN),
+                send("POST", "/api/suppliers", "{\"name\": \"X\", \"stateCode\": \"00\"}", 400, ADMIN),
+                send("PUT", "/api/suppliers/{id}", "{\"name\": \"X\"}", 404, ADMIN),
+                send("POST", "/api/suppliers/{id}/deactivate", null, 404, ADMIN),
+                send("POST", "/api/suppliers/{id}/reactivate", null, 404, ADMIN),
+                send("POST", "/api/items", """
+                        {"code": "RM-1", "name": "X", "kind": "RAW", "baseUnit": "ctn"}""", 400, ADMIN),
+                send("PUT", "/api/items/{code}", "{\"name\": \"X\", \"baseUnit\": \"kg\"}", 404, ADMIN),
+                send("POST", "/api/items/{code}/deactivate", null, 404, ADMIN),
+                send("POST", "/api/items/{code}/reactivate", null, 404, ADMIN),
+                new Endpoint("GET", "/api/boms", "/api/boms?productCode=NOPE", null, 404, OPERATIONS_READ),
+                send("POST", "/api/boms", """
+                        {"productCode": "NOPE", "outputQty": 1, "lines": []}""", 404, ADMIN),
+                send("POST", "/api/boms/{id}/activate", null, 404, ADMIN),
 
                 send("POST", "/api/orders", """
                         {"customerId": 999999, "clientUuid": "00000000-0000-0000-0000-000000000001",

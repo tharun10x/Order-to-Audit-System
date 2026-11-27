@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -47,7 +48,7 @@ public class Bom {
     @Column(name = "created_at", insertable = false, updatable = false)
     private Instant createdAt;
 
-    @OneToMany(mappedBy = "bom")
+    @OneToMany(mappedBy = "bom", cascade = CascadeType.ALL)
     @OrderBy("id")
     private List<BomLine> lines = new ArrayList<>();
 }

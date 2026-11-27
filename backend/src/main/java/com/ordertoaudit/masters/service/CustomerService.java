@@ -12,8 +12,9 @@ import com.ordertoaudit.masters.entity.UserRole;
 import com.ordertoaudit.masters.repository.CompanyRepository;
 import com.ordertoaudit.masters.repository.CustomerRepository;
 import com.ordertoaudit.masters.web.CustomerResponse;
+import com.ordertoaudit.masters.web.StatusFilter;
 
-/** Read-only customer list for order taking. */
+/** The customer list, for order taking and for the masters screen. */
 @Service
 public class CustomerService {
 
@@ -25,15 +26,27 @@ public class CustomerService {
         this.companyRepository = companyRepository;
     }
 
-    /** Active customers (R5.4). A salesman gets only the ones assigned to them (R2.2). */
+    /** By default the active customers (R5.4, M6). A salesman gets only the ones assigned to them (R2.2). */
     @Transactional(readOnly = true)
-    public List<CustomerResponse> list(AppUser user) {
-        String companyState = companyRepository.findAll().stream().findFirst()
+    public List<CustomerResponse> list(AppUser user, StatusFilter status) {
+        List<Customer> customers = user.getRole() == UserRole.SALESMAN
+                ? customerRepository.findBySalesmanIdOrderByNameAsc(user.getId())
+                : customerRepository.findAllByOrderByNameAsc();
+        String companyState = companyStateCode();
+        return customers.stream()
+                .filter(customer -> status.includes(customer.isActive()))
+                .map(customer -> CustomerResponse.from(customer, companyState))
+                .toList();
+    }
+
+    /** Call inside a transaction. */
+    public CustomerResponse toResponse(Customer customer) {
+        return CustomerResponse.from(customer, companyStateCode());
+    }
+
+    private String companyStateCode() {
+        return companyRepository.findAll().stream().findFirst()
                 .map(Company::getStateCode)
                 .orElseThrow(() -> new IllegalStateException("The company row is missing"));
-        List<Customer> customers = user.getRole() == UserRole.SALESMAN
-                ? customerRepository.findBySalesmanIdAndActiveTrueOrderByNameAsc(user.getId())
-                : customerRepository.findByActiveTrueOrderByNameAsc();
-        return customers.stream().map(customer -> CustomerResponse.from(customer, companyState)).toList();
     }
 }

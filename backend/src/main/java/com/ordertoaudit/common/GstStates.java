@@ -1,4 +1,4 @@
-package com.ordertoaudit.billing.service;
+package com.ordertoaudit.common;
 
 import java.util.Map;
 
@@ -21,6 +21,11 @@ public final class GstStates {
             Map.entry("37", "Andhra Pradesh"), Map.entry("38", "Ladakh"), Map.entry("97", "Other Territory"));
 
     private GstStates() {
+    }
+
+    /** R5.3: a customer's or supplier's state must be a real GST state code. */
+    public static boolean isKnown(String stateCode) {
+        return NAMES.containsKey(stateCode);
     }
 
     /** For example "Karnataka (29)". An unknown code is shown as the code alone. */

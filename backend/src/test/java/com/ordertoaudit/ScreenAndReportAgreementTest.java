@@ -17,6 +17,7 @@ import com.ordertoaudit.inventory.web.LedgerRowResponse;
 import com.ordertoaudit.masters.service.ItemService;
 import com.ordertoaudit.masters.service.UnitConversionService;
 import com.ordertoaudit.masters.web.ItemResponse;
+import com.ordertoaudit.masters.web.StatusFilter;
 import com.ordertoaudit.payments.web.CustomerOutstandingResponse;
 import com.ordertoaudit.reports.ReportsTestSupport;
 import com.ordertoaudit.reports.model.ReportTable;
@@ -116,7 +117,7 @@ class ScreenAndReportAgreementTest extends AbstractSalesTest {
     @Test
     void offeredUnitsAreExactlyTheUnitsTheConverterAccepts() {
         Map<String, List<String>> offered = new java.util.HashMap<>();
-        for (ItemResponse item : itemService.list()) {
+        for (ItemResponse item : itemService.list(StatusFilter.ACTIVE)) {
             offered.put(item.code(), item.units());
         }
 

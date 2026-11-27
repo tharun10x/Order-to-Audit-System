@@ -6,9 +6,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ordertoaudit.masters.repository.SupplierRepository;
+import com.ordertoaudit.masters.web.StatusFilter;
 import com.ordertoaudit.masters.web.SupplierResponse;
 
-/** Read-only supplier list for recording purchases. */
+/** The supplier list, for recording purchases and for the masters screen. */
 @Service
 public class SupplierService {
 
@@ -18,9 +19,12 @@ public class SupplierService {
         this.supplierRepository = supplierRepository;
     }
 
-    /** Active suppliers (R5.4), by name. */
+    /** By default the active suppliers (R5.4, M6), by name. */
     @Transactional(readOnly = true)
-    public List<SupplierResponse> list() {
-        return supplierRepository.findByActiveTrueOrderByNameAsc().stream().map(SupplierResponse::from).toList();
+    public List<SupplierResponse> list(StatusFilter status) {
+        return supplierRepository.findAllByOrderByNameAsc().stream()
+                .filter(supplier -> status.includes(supplier.isActive()))
+                .map(SupplierResponse::from)
+                .toList();
     }
 }

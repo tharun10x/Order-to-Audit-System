@@ -9,6 +9,7 @@ import java.util.Locale;
 import com.ordertoaudit.billing.entity.Invoice;
 import com.ordertoaudit.billing.entity.InvoiceLine;
 import com.ordertoaudit.billing.entity.SupplyType;
+import com.ordertoaudit.common.GstStates;
 
 /**
  * What the invoice template prints, already formatted as text. Built ONLY from the invoice and its lines, so a

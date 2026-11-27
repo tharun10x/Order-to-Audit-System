@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ordertoaudit.billing.service.GstStates;
+import com.ordertoaudit.common.GstStates;
 import com.ordertoaudit.masters.entity.AppUser;
 import com.ordertoaudit.reports.model.ColumnType;
 import com.ordertoaudit.reports.model.Report;

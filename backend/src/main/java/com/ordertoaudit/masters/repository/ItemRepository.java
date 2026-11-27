@@ -20,7 +20,13 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
 
     List<Item> findByKindAndActiveTrueOrderByNameAsc(ItemKind kind);
 
-    List<Item> findByActiveTrueOrderByKindAscCodeAsc();
+    List<Item> findAllByOrderByKindAscCodeAsc();
+
+    boolean existsByCode(String code);
+
+    /** M7: has the item ever moved? SQL, so the masters package needs no inventory classes. */
+    @Query(value = "SELECT EXISTS (SELECT 1 FROM stock_movement WHERE item_id = :itemId)", nativeQuery = true)
+    boolean hasStockMovements(@Param("itemId") Long itemId);
 
     /**
      * R6.7: locks the item rows (SELECT ... FOR UPDATE). The ORDER BY makes every transaction

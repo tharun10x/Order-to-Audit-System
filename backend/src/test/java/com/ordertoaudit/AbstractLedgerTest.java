@@ -24,7 +24,8 @@ import com.ordertoaudit.masters.repository.AppUserRepository;
  * Base for tests that post real transactions (they COMMIT, because the concurrency test needs that).
  * To keep the seed intact for other test classes, everything created by a test is deleted before and
  * after it: sales documents, payments, purchases, production runs, audit rows, every movement except the OPENING rows from the seed,
- * and the document counters.
+ * and the document counters. Master data goes back to the seed too: records the masters tests created are deleted,
+ * and the seed records are active again, with the 200 g price and the version 1 recipe.
  */
 public abstract class AbstractLedgerTest extends AbstractIntegrationTest {
 
@@ -66,6 +67,21 @@ public abstract class AbstractLedgerTest extends AbstractIntegrationTest {
         // Document counters go back to the seed state: only 2026-27 rows, each starting at 1
         jdbc.update("DELETE FROM invoice_sequence WHERE financial_year <> '2026-27'");
         jdbc.update("UPDATE invoice_sequence SET next_number = 1");
+        // Masters, after the documents that point at them
+        jdbc.update("DELETE FROM bom_line WHERE bom_id IN (SELECT id FROM bom WHERE version > 1)");
+        jdbc.update("DELETE FROM bom WHERE version > 1");
+        jdbc.update("UPDATE bom SET active = TRUE");
+        jdbc.update("DELETE FROM item_uom_conversion WHERE item_id IN (SELECT id FROM item WHERE code NOT IN "
+                + "('FLOUR', 'OIL', 'SPICE', 'POUCH', 'CARTON', 'MURUKKU200'))");
+        jdbc.update("DELETE FROM bom_line WHERE bom_id IN (SELECT b.id FROM bom b JOIN item i ON i.id = b.product_id "
+                + "WHERE i.code <> 'MURUKKU200')");
+        jdbc.update("DELETE FROM bom WHERE product_id IN (SELECT id FROM item WHERE code <> 'MURUKKU200')");
+        jdbc.update("DELETE FROM item WHERE code NOT IN ('FLOUR', 'OIL', 'SPICE', 'POUCH', 'CARTON', 'MURUKKU200')");
+        jdbc.update("UPDATE item SET active = TRUE, selling_price = CASE WHEN code = 'MURUKKU200' THEN 50 END");
+        jdbc.update("DELETE FROM customer WHERE code NOT IN ('RET-A', 'DIST-B')");
+        jdbc.update("UPDATE customer SET active = TRUE");
+        jdbc.update("DELETE FROM supplier WHERE name <> 'Sample Flour Mills'");
+        jdbc.update("UPDATE supplier SET active = TRUE");
     }
 
     protected AppUser admin() {
