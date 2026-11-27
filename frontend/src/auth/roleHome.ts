@@ -10,7 +10,8 @@ export function roleHome(role: Role): string {
     case 'PRODUCTION':
       return '/production/runs'
     case 'AUDITOR':
-    case 'OWNER':
       return '/reports'
+    case 'OWNER':
+      return '/dashboard'
   }
 }

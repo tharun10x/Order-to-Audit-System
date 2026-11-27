@@ -1,0 +1,66 @@
+{
+  "code": "collections",
+  "title": "Payments and collections",
+  "subject": null,
+  "from": "2026-11-01",
+  "to": "2026-11-30",
+  "periodLabel": "01-Nov-2026 to 30-Nov-2026",
+  "companyName": "Sample Murukku Foods",
+  "generatedAt": "2026-11-27T13:21:48.488689500Z",
+  "generatedBy": "auditor",
+  "sections": [
+    {
+      "title": "Payments received",
+      "columns": [
+        {
+          "key": "date",
+          "header": "Date",
+          "type": "DATE"
+        },
+        {
+          "key": "customer",
+          "header": "Customer",
+          "type": "TEXT"
+        },
+        {
+          "key": "mode",
+          "header": "Mode",
+          "type": "TEXT"
+        },
+        {
+          "key": "reference",
+          "header": "Reference",
+          "type": "TEXT"
+        },
+        {
+          "key": "amount",
+          "header": "Amount",
+          "type": "MONEY"
+        },
+        {
+          "key": "allocatedTo",
+          "header": "Allocated to",
+          "type": "TEXT"
+        }
+      ],
+      "rows": [
+        [
+          "2026-11-28",
+          "Retailer A",
+          "UPI",
+          null,
+          4000,
+          "INV/2026-27/0001: 4000.00"
+        ]
+      ],
+      "totals": [
+        null,
+        "Total",
+        null,
+        null,
+        4000,
+        null
+      ]
+    }
+  ]
+}

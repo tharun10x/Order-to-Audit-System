@@ -1,0 +1,140 @@
+{
+  "code": "outstanding",
+  "title": "Outstanding with ageing",
+  "subject": null,
+  "from": "2026-11-01",
+  "to": "2026-11-30",
+  "periodLabel": "As of 30-Nov-2026",
+  "companyName": "Sample Murukku Foods",
+  "generatedAt": "2026-11-27T13:21:48.542745600Z",
+  "generatedBy": "auditor",
+  "sections": [
+    {
+      "title": "By customer",
+      "columns": [
+        {
+          "key": "customer",
+          "header": "Customer",
+          "type": "TEXT"
+        },
+        {
+          "key": "invoices",
+          "header": "Invoices",
+          "type": "COUNT"
+        },
+        {
+          "key": "outstanding",
+          "header": "Outstanding",
+          "type": "MONEY"
+        },
+        {
+          "key": "days0-30",
+          "header": "0-30 days",
+          "type": "MONEY"
+        },
+        {
+          "key": "days31-60",
+          "header": "31-60 days",
+          "type": "MONEY"
+        },
+        {
+          "key": "days61-90",
+          "header": "61-90 days",
+          "type": "MONEY"
+        },
+        {
+          "key": "days90+",
+          "header": "90+ days",
+          "type": "MONEY"
+        }
+      ],
+      "rows": [
+        [
+          "Retailer A",
+          1,
+          3875,
+          3875,
+          0,
+          0,
+          0
+        ]
+      ],
+      "totals": [
+        "Total",
+        1,
+        3875,
+        3875,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "title": "By invoice",
+      "columns": [
+        {
+          "key": "invoiceNo",
+          "header": "Invoice no",
+          "type": "TEXT"
+        },
+        {
+          "key": "invoiceDate",
+          "header": "Invoice date",
+          "type": "DATE"
+        },
+        {
+          "key": "customer",
+          "header": "Customer",
+          "type": "TEXT"
+        },
+        {
+          "key": "total",
+          "header": "Invoice total",
+          "type": "MONEY"
+        },
+        {
+          "key": "paid",
+          "header": "Paid",
+          "type": "MONEY"
+        },
+        {
+          "key": "outstanding",
+          "header": "Outstanding",
+          "type": "MONEY"
+        },
+        {
+          "key": "days",
+          "header": "Days",
+          "type": "COUNT"
+        },
+        {
+          "key": "bucket",
+          "header": "Ageing",
+          "type": "TEXT"
+        }
+      ],
+      "rows": [
+        [
+          "INV/2026-27/0001",
+          "2026-11-28",
+          "Retailer A",
+          7875,
+          4000,
+          3875,
+          2,
+          "0-30"
+        ]
+      ],
+      "totals": [
+        "Total",
+        null,
+        null,
+        null,
+        null,
+        3875,
+        null,
+        null
+      ]
+    }
+  ]
+}

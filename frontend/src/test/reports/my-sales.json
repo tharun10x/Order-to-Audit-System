@@ -1,0 +1,59 @@
+{
+  "code": "my-sales",
+  "title": "My sales: Salesman A",
+  "subject": null,
+  "from": "2026-11-01",
+  "to": "2026-11-30",
+  "periodLabel": "01-Nov-2026 to 30-Nov-2026",
+  "companyName": "Sample Murukku Foods",
+  "generatedAt": "2026-11-27T13:21:48.694211100Z",
+  "generatedBy": "salesman_a",
+  "sections": [
+    {
+      "title": "Customer-wise sales",
+      "columns": [
+        {
+          "key": "customerCode",
+          "header": "Code",
+          "type": "TEXT"
+        },
+        {
+          "key": "customer",
+          "header": "Customer",
+          "type": "TEXT"
+        },
+        {
+          "key": "orders",
+          "header": "Orders",
+          "type": "COUNT"
+        },
+        {
+          "key": "invoiced",
+          "header": "Invoiced",
+          "type": "MONEY"
+        },
+        {
+          "key": "outstanding",
+          "header": "Outstanding",
+          "type": "MONEY"
+        }
+      ],
+      "rows": [
+        [
+          "RET-A",
+          "Retailer A",
+          1,
+          7875,
+          3875
+        ]
+      ],
+      "totals": [
+        "Total",
+        null,
+        1,
+        7875,
+        3875
+      ]
+    }
+  ]
+}

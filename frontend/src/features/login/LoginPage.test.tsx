@@ -28,7 +28,7 @@ describe('Sign in', () => {
     ['ADMIN', '/orders'],
     ['PRODUCTION', '/production/runs'],
     ['AUDITOR', '/reports'],
-    ['OWNER', '/reports'],
+    ['OWNER', '/dashboard'],
   ] as [Role, string][])('sends %s to %s', async (role, home) => {
     fakeBackend({ ...loginAs(role), ...meRoute(role), 'GET /api/orders': [], 'GET /api/customers': [], 'GET /api/products': [] })
     const router = renderApp('/login', null)

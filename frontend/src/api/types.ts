@@ -475,3 +475,50 @@ export interface BomRequest {
   copyIngredientsFrom: string | null
   lines: { itemCode: string; qty: string; uomCode: string }[]
 }
+
+// ---------------------------------------------------------------- reports and dashboard (R15)
+
+/** How a report column is stored; the screen formats by it (the server never sends formatted numbers). */
+export type ColumnType = 'TEXT' | 'DATE' | 'QTY' | 'RATE' | 'MONEY' | 'PERCENT' | 'COUNT'
+
+/** A cell: text, an ISO date, a number, or null for an empty cell. */
+export type ReportCell = string | number | null
+
+export interface ReportColumn {
+  key: string
+  header: string
+  type: ColumnType
+}
+
+/** One table of a report. totals is null when the table has no totals row. */
+export interface ReportTable {
+  title: string
+  columns: ReportColumn[]
+  rows: ReportCell[][]
+  totals: ReportCell[] | null
+}
+
+/** GET /api/reports/{code}?format=json. periodLabel is "01-Nov-2026 to 30-Nov-2026" or "As of 30-Nov-2026". */
+export interface Report {
+  code: string
+  title: string
+  subject: string | null
+  from: string
+  to: string
+  periodLabel: string
+  companyName: string
+  generatedAt: string
+  generatedBy: string
+  sections: ReportTable[]
+}
+
+/** GET /api/dashboard (R15.7). subject of an alert is an item code, or "YIELD" for the run's output. */
+export interface Dashboard {
+  businessDate: string
+  todaysOrders: Record<OrderStatus, number>
+  stockLevels: { itemCode: string; itemName: string; kind: ItemKind; unit: string; qtyOnHand: number; reorderLevel: number | null; lowStock: boolean }[]
+  varianceAlerts: { runNo: string; runDate: string; productCode: string; subject: string; variancePct: number }[]
+  costPerPacket: { productCode: string; productName: string; runNo: string; runDate: string; costPerPacket: number; costPerPacketRounded: number }[]
+  totalOutstanding: number
+  topOutstanding: { customerId: number; customerName: string; outstanding: number }[]
+}

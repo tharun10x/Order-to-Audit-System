@@ -1,4 +1,5 @@
 import type { Role } from '../api/types'
+import { REPORT_ROLES } from '../lib/reportCatalog'
 
 /**
  * R2 on the screen: which pages a role can open and which actions it sees. The backend enforces the same rules
@@ -8,7 +9,9 @@ const READ_ACCOUNTS: Role[] = ['ADMIN', 'AUDITOR', 'OWNER']
 const READ_OPERATIONS: Role[] = ['ADMIN', 'PRODUCTION', 'AUDITOR', 'OWNER']
 
 export const PAGE_ROLES = {
-  reports: ['AUDITOR', 'OWNER'] as Role[],
+  // R15: each role sees only the reports it may open (lib/reportCatalog); production has the operations ones
+  reports: REPORT_ROLES,
+  dashboard: ['OWNER', 'ADMIN'] as Role[],
   orders: READ_ACCOUNTS,
   invoices: READ_ACCOUNTS,
   payments: READ_ACCOUNTS,
@@ -61,12 +64,15 @@ export const NAV: Record<Role, { to: string; label: string }[]> = {
     { to: '/production/runs', label: 'Production' },
     { to: '/stock', label: 'Stock' },
     { to: '/masters', label: 'Masters' },
+    { to: '/reports', label: 'Reports' },
+    { to: '/dashboard', label: 'Dashboard' },
   ],
   PRODUCTION: [
     { to: '/production/runs', label: 'Production runs' },
     { to: '/purchases', label: 'Purchases' },
     { to: '/stock', label: 'Stock' },
     { to: '/masters', label: 'Masters' },
+    { to: '/reports', label: 'Reports' },
   ],
   AUDITOR: [
     { to: '/reports', label: 'Reports' },
@@ -79,6 +85,7 @@ export const NAV: Record<Role, { to: string; label: string }[]> = {
     { to: '/masters', label: 'Masters' },
   ],
   OWNER: [
+    { to: '/dashboard', label: 'Dashboard' },
     { to: '/reports', label: 'Reports' },
     { to: '/orders', label: 'Orders' },
     { to: '/invoices', label: 'Invoices' },

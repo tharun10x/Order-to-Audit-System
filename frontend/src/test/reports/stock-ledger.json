@@ -1,0 +1,109 @@
+{
+  "code": "stock-ledger",
+  "title": "Stock ledger: Flour (FLOUR)",
+  "subject": "FLOUR",
+  "from": "2026-11-01",
+  "to": "2026-11-30",
+  "periodLabel": "01-Nov-2026 to 30-Nov-2026",
+  "companyName": "Sample Murukku Foods",
+  "generatedAt": "2026-11-27T13:21:48.641157Z",
+  "generatedBy": "auditor",
+  "sections": [
+    {
+      "title": "Movements of FLOUR",
+      "columns": [
+        {
+          "key": "date",
+          "header": "Date",
+          "type": "DATE"
+        },
+        {
+          "key": "movement",
+          "header": "Movement",
+          "type": "TEXT"
+        },
+        {
+          "key": "document",
+          "header": "Source document",
+          "type": "TEXT"
+        },
+        {
+          "key": "qtyIn",
+          "header": "Qty in",
+          "type": "QTY"
+        },
+        {
+          "key": "qtyOut",
+          "header": "Qty out",
+          "type": "QTY"
+        },
+        {
+          "key": "unitCost",
+          "header": "Unit cost",
+          "type": "RATE"
+        },
+        {
+          "key": "value",
+          "header": "Value",
+          "type": "MONEY"
+        },
+        {
+          "key": "balanceQty",
+          "header": "Balance qty",
+          "type": "QTY"
+        },
+        {
+          "key": "balanceValue",
+          "header": "Balance value",
+          "type": "MONEY"
+        }
+      ],
+      "rows": [
+        [
+          "2026-11-01",
+          "Opening balance",
+          null,
+          null,
+          null,
+          null,
+          null,
+          100,
+          4200
+        ],
+        [
+          "2026-11-28",
+          "RECEIPT",
+          "Bill SFM-1101 (Sample Flour Mills)",
+          60,
+          null,
+          45,
+          2700,
+          160,
+          6900
+        ],
+        [
+          "2026-11-28",
+          "ISSUE",
+          "RUN/2026-27/0001",
+          null,
+          40,
+          43.125,
+          -1725,
+          120,
+          5175
+        ]
+      ],
+      "totals": [
+        "2026-11-30",
+        "Closing balance",
+        null,
+        60,
+        40,
+        null,
+        null,
+        120,
+        5175
+      ]
+    }
+  ]
+}

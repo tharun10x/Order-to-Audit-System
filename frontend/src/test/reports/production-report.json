@@ -1,0 +1,244 @@
+{
+  "code": "production-report",
+  "title": "Production report",
+  "subject": null,
+  "from": "2026-11-01",
+  "to": "2026-11-30",
+  "periodLabel": "01-Nov-2026 to 30-Nov-2026",
+  "companyName": "Sample Murukku Foods",
+  "generatedAt": "2026-11-27T13:21:48.438450Z",
+  "generatedBy": "auditor",
+  "sections": [
+    {
+      "title": "Runs",
+      "columns": [
+        {
+          "key": "runNo",
+          "header": "Run no",
+          "type": "TEXT"
+        },
+        {
+          "key": "date",
+          "header": "Date",
+          "type": "DATE"
+        },
+        {
+          "key": "product",
+          "header": "Product",
+          "type": "TEXT"
+        },
+        {
+          "key": "batches",
+          "header": "Batches",
+          "type": "QTY"
+        },
+        {
+          "key": "expected",
+          "header": "Expected output",
+          "type": "QTY"
+        },
+        {
+          "key": "good",
+          "header": "Good output",
+          "type": "QTY"
+        },
+        {
+          "key": "yieldVariance",
+          "header": "Yield variance %",
+          "type": "PERCENT"
+        },
+        {
+          "key": "yieldFlag",
+          "header": "Flag",
+          "type": "TEXT"
+        },
+        {
+          "key": "material",
+          "header": "Material",
+          "type": "MONEY"
+        },
+        {
+          "key": "packaging",
+          "header": "Packaging",
+          "type": "MONEY"
+        },
+        {
+          "key": "overheads",
+          "header": "Overheads",
+          "type": "MONEY"
+        },
+        {
+          "key": "totalCost",
+          "header": "Total cost",
+          "type": "MONEY"
+        },
+        {
+          "key": "costPerPacket",
+          "header": "Cost per packet",
+          "type": "MONEY"
+        }
+      ],
+      "rows": [
+        [
+          "RUN/2026-27/0001",
+          "2026-11-28",
+          "Murukku 200 g",
+          1,
+          200,
+          188,
+          -6,
+          "⚑",
+          3435,
+          620,
+          1800,
+          5855,
+          31.14
+        ]
+      ],
+      "totals": [
+        "Total",
+        null,
+        null,
+        null,
+        200,
+        188,
+        null,
+        null,
+        3435,
+        620,
+        1800,
+        5855,
+        null
+      ]
+    },
+    {
+      "title": "RUN/2026-27/0001 consumption",
+      "columns": [
+        {
+          "key": "itemCode",
+          "header": "Item code",
+          "type": "TEXT"
+        },
+        {
+          "key": "item",
+          "header": "Item",
+          "type": "TEXT"
+        },
+        {
+          "key": "kind",
+          "header": "Kind",
+          "type": "TEXT"
+        },
+        {
+          "key": "standard",
+          "header": "Standard",
+          "type": "QTY"
+        },
+        {
+          "key": "actual",
+          "header": "Actual (incl. scrap)",
+          "type": "QTY"
+        },
+        {
+          "key": "scrap",
+          "header": "Scrap",
+          "type": "QTY"
+        },
+        {
+          "key": "variance",
+          "header": "Variance %",
+          "type": "PERCENT"
+        },
+        {
+          "key": "flag",
+          "header": "Flag",
+          "type": "TEXT"
+        },
+        {
+          "key": "unitCost",
+          "header": "Unit cost",
+          "type": "RATE"
+        },
+        {
+          "key": "value",
+          "header": "Value",
+          "type": "MONEY"
+        }
+      ],
+      "rows": [
+        [
+          "FLOUR",
+          "Flour",
+          "RAW",
+          40,
+          40,
+          0,
+          0,
+          null,
+          43.125,
+          1725
+        ],
+        [
+          "OIL",
+          "Cooking oil",
+          "RAW",
+          10,
+          10.5,
+          0,
+          5,
+          "⚑",
+          140,
+          1470
+        ],
+        [
+          "SPICE",
+          "Salt and spice mix",
+          "RAW",
+          1.2,
+          1.2,
+          0,
+          0,
+          null,
+          200,
+          240
+        ],
+        [
+          "POUCH",
+          "200 g pouch",
+          "PACKAGING",
+          188,
+          194,
+          6,
+          3.19,
+          "⚑",
+          2.5,
+          485
+        ],
+        [
+          "CARTON",
+          "Carton (20 packets)",
+          "PACKAGING",
+          9,
+          9,
+          0,
+          0,
+          null,
+          15,
+          135
+        ]
+      ],
+      "totals": [
+        "Total",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        4055
+      ]
+    }
+  ]
+}

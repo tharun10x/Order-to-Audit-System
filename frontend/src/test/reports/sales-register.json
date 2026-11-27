@@ -1,0 +1,263 @@
+{
+  "code": "sales-register",
+  "title": "Sales register",
+  "subject": null,
+  "from": "2026-11-01",
+  "to": "2026-11-30",
+  "periodLabel": "01-Nov-2026 to 30-Nov-2026",
+  "companyName": "Sample Murukku Foods",
+  "generatedAt": "2026-11-27T13:21:48.105380Z",
+  "generatedBy": "auditor",
+  "sections": [
+    {
+      "title": "Invoices and credit notes",
+      "columns": [
+        {
+          "key": "type",
+          "header": "Type",
+          "type": "TEXT"
+        },
+        {
+          "key": "documentNo",
+          "header": "Document no",
+          "type": "TEXT"
+        },
+        {
+          "key": "date",
+          "header": "Date",
+          "type": "DATE"
+        },
+        {
+          "key": "invoiceNo",
+          "header": "Against invoice",
+          "type": "TEXT"
+        },
+        {
+          "key": "customer",
+          "header": "Customer",
+          "type": "TEXT"
+        },
+        {
+          "key": "gstin",
+          "header": "GSTIN",
+          "type": "TEXT"
+        },
+        {
+          "key": "placeOfSupply",
+          "header": "Place of supply",
+          "type": "TEXT"
+        },
+        {
+          "key": "taxable",
+          "header": "Taxable",
+          "type": "MONEY"
+        },
+        {
+          "key": "cgst",
+          "header": "CGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "sgst",
+          "header": "SGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "igst",
+          "header": "IGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "total",
+          "header": "Total",
+          "type": "MONEY"
+        },
+        {
+          "key": "status",
+          "header": "Status",
+          "type": "TEXT"
+        }
+      ],
+      "rows": [
+        [
+          "Invoice",
+          "INV/2026-27/0001",
+          "2026-11-28",
+          null,
+          "Retailer A",
+          "33AAACR5055K1Z5",
+          "Tamil Nadu (33)",
+          7500,
+          187.5,
+          187.5,
+          0,
+          7875,
+          "POSTED"
+        ]
+      ],
+      "totals": [
+        "Total",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        7500,
+        187.5,
+        187.5,
+        0,
+        7875,
+        null
+      ]
+    },
+    {
+      "title": "Customer-wise sales",
+      "columns": [
+        {
+          "key": "customer",
+          "header": "Customer",
+          "type": "TEXT"
+        },
+        {
+          "key": "gstin",
+          "header": "GSTIN",
+          "type": "TEXT"
+        },
+        {
+          "key": "invoices",
+          "header": "Invoices",
+          "type": "COUNT"
+        },
+        {
+          "key": "creditNotes",
+          "header": "Credit notes",
+          "type": "COUNT"
+        },
+        {
+          "key": "taxable",
+          "header": "Taxable",
+          "type": "MONEY"
+        },
+        {
+          "key": "cgst",
+          "header": "CGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "sgst",
+          "header": "SGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "igst",
+          "header": "IGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "total",
+          "header": "Total",
+          "type": "MONEY"
+        }
+      ],
+      "rows": [
+        [
+          "Retailer A",
+          "33AAACR5055K1Z5",
+          1,
+          0,
+          7500,
+          187.5,
+          187.5,
+          0,
+          7875
+        ]
+      ],
+      "totals": [
+        "Total",
+        null,
+        1,
+        0,
+        7500,
+        187.5,
+        187.5,
+        0,
+        7875
+      ]
+    },
+    {
+      "title": "Product-wise sales",
+      "columns": [
+        {
+          "key": "itemCode",
+          "header": "Product code",
+          "type": "TEXT"
+        },
+        {
+          "key": "product",
+          "header": "Product",
+          "type": "TEXT"
+        },
+        {
+          "key": "hsn",
+          "header": "HSN",
+          "type": "TEXT"
+        },
+        {
+          "key": "qty",
+          "header": "Qty (packets)",
+          "type": "QTY"
+        },
+        {
+          "key": "taxable",
+          "header": "Taxable",
+          "type": "MONEY"
+        },
+        {
+          "key": "cgst",
+          "header": "CGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "sgst",
+          "header": "SGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "igst",
+          "header": "IGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "total",
+          "header": "Total",
+          "type": "MONEY"
+        }
+      ],
+      "rows": [
+        [
+          "MURUKKU200",
+          "Murukku 200 g",
+          "21069099",
+          150,
+          7500,
+          187.5,
+          187.5,
+          0,
+          7875
+        ]
+      ],
+      "totals": [
+        "Total",
+        null,
+        null,
+        150,
+        7500,
+        187.5,
+        187.5,
+        0,
+        7875
+      ]
+    }
+  ]
+}

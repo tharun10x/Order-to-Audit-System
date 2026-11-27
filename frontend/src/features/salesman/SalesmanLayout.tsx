@@ -26,6 +26,9 @@ export function SalesmanLayout() {
           <NavLink to="/sales/orders" className={tab}>
             My orders
           </NavLink>
+          <NavLink to="/sales/my-sales" className={tab}>
+            My sales
+          </NavLink>
         </nav>
       </header>
       <main className="mx-auto max-w-[480px] px-4 py-5 text-base">

@@ -5,7 +5,6 @@ import type { Role } from '../api/types'
 import { PAGE_ROLES } from '../auth/permissions'
 import { RequireRole } from '../auth/RequireRole'
 import { OrdersPage } from '../features/admin/OrdersPage'
-import { ReportsPlaceholder } from '../features/auditor/ReportsPlaceholder'
 import { InvoiceDetailPage } from '../features/billing/InvoiceDetailPage'
 import { InvoicesPage } from '../features/billing/InvoicesPage'
 import { LoginPage } from '../features/login/LoginPage'
@@ -17,12 +16,15 @@ import { SuppliersPage } from '../features/masters/SuppliersPage'
 import { OutstandingPage } from '../features/payments/OutstandingPage'
 import { PaymentsPage } from '../features/payments/PaymentsPage'
 import { RecordPaymentPage } from '../features/payments/RecordPaymentPage'
+import { DashboardPage } from '../features/owner/DashboardPage'
 import { NewRunPage } from '../features/production/NewRunPage'
 import { RunDetailPage } from '../features/production/RunDetailPage'
 import { RunsPage } from '../features/production/RunsPage'
+import { ReportsPage } from '../features/reports/ReportsPage'
 import { PurchasesPage } from '../features/purchases/PurchasesPage'
 import { RecordPurchasePage } from '../features/purchases/RecordPurchasePage'
 import { MyOrdersPage } from '../features/salesman/MyOrdersPage'
+import { MySalesPage } from '../features/salesman/MySalesPage'
 import { NewOrderPage } from '../features/salesman/NewOrderPage'
 import { SalesmanLayout } from '../features/salesman/SalesmanLayout'
 import { StockLedgerPage } from '../features/stock/StockLedgerPage'
@@ -47,6 +49,7 @@ export const routes = [
     children: [
       { path: '/sales/new', element: <NewOrderPage /> },
       { path: '/sales/orders', element: <MyOrdersPage /> },
+      { path: '/sales/my-sales', element: <MySalesPage /> },
     ],
   },
   {
@@ -66,7 +69,8 @@ export const routes = [
       page('/production/runs/:runId', PAGE_ROLES.production, <RunDetailPage />),
       page('/stock', PAGE_ROLES.stock, <StockPage />),
       page('/stock/ledger/:itemCode', PAGE_ROLES.stock, <StockLedgerPage />),
-      page('/reports', PAGE_ROLES.reports, <ReportsPlaceholder />),
+      page('/reports', PAGE_ROLES.reports, <ReportsPage />),
+      page('/dashboard', PAGE_ROLES.dashboard, <DashboardPage />),
       {
         // Every role that can open at least one masters list; each page then checks its own roles
         element: (

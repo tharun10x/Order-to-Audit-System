@@ -1,0 +1,94 @@
+{
+  "code": "purchase-register",
+  "title": "Purchase register",
+  "subject": null,
+  "from": "2026-11-01",
+  "to": "2026-11-30",
+  "periodLabel": "01-Nov-2026 to 30-Nov-2026",
+  "companyName": "Sample Murukku Foods",
+  "generatedAt": "2026-11-27T13:21:48.226092600Z",
+  "generatedBy": "auditor",
+  "sections": [
+    {
+      "title": "Purchase bills",
+      "columns": [
+        {
+          "key": "date",
+          "header": "Date",
+          "type": "DATE"
+        },
+        {
+          "key": "billNo",
+          "header": "Bill no",
+          "type": "TEXT"
+        },
+        {
+          "key": "supplier",
+          "header": "Supplier",
+          "type": "TEXT"
+        },
+        {
+          "key": "itemCode",
+          "header": "Item code",
+          "type": "TEXT"
+        },
+        {
+          "key": "item",
+          "header": "Item",
+          "type": "TEXT"
+        },
+        {
+          "key": "qty",
+          "header": "Qty",
+          "type": "QTY"
+        },
+        {
+          "key": "unit",
+          "header": "Unit",
+          "type": "TEXT"
+        },
+        {
+          "key": "rate",
+          "header": "Rate",
+          "type": "RATE"
+        },
+        {
+          "key": "amount",
+          "header": "Amount",
+          "type": "MONEY"
+        },
+        {
+          "key": "status",
+          "header": "Status",
+          "type": "TEXT"
+        }
+      ],
+      "rows": [
+        [
+          "2026-11-28",
+          "SFM-1101",
+          "Sample Flour Mills",
+          "FLOUR",
+          "Flour",
+          60,
+          "kg",
+          45,
+          2700,
+          "POSTED"
+        ]
+      ],
+      "totals": [
+        null,
+        "Total (excluding reversed)",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        2700,
+        null
+      ]
+    }
+  ]
+}

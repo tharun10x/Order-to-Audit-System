@@ -1,0 +1,292 @@
+{
+  "code": "stock-summary",
+  "title": "Stock summary",
+  "subject": null,
+  "from": "2026-11-01",
+  "to": "2026-11-30",
+  "periodLabel": "01-Nov-2026 to 30-Nov-2026",
+  "companyName": "Sample Murukku Foods",
+  "generatedAt": "2026-11-27T13:21:48.319831400Z",
+  "generatedBy": "auditor",
+  "sections": [
+    {
+      "title": "Raw materials",
+      "columns": [
+        {
+          "key": "itemCode",
+          "header": "Item code",
+          "type": "TEXT"
+        },
+        {
+          "key": "item",
+          "header": "Item",
+          "type": "TEXT"
+        },
+        {
+          "key": "unit",
+          "header": "Unit",
+          "type": "TEXT"
+        },
+        {
+          "key": "opening",
+          "header": "Opening",
+          "type": "QTY"
+        },
+        {
+          "key": "receipts",
+          "header": "Receipts",
+          "type": "QTY"
+        },
+        {
+          "key": "issues",
+          "header": "Issues / sales",
+          "type": "QTY"
+        },
+        {
+          "key": "adjustments",
+          "header": "Adjustments",
+          "type": "QTY"
+        },
+        {
+          "key": "closing",
+          "header": "Closing",
+          "type": "QTY"
+        },
+        {
+          "key": "closingValue",
+          "header": "Closing value",
+          "type": "MONEY"
+        },
+        {
+          "key": "averageCost",
+          "header": "Avg cost",
+          "type": "RATE"
+        }
+      ],
+      "rows": [
+        [
+          "FLOUR",
+          "Flour",
+          "kg",
+          100,
+          60,
+          40,
+          0,
+          120,
+          5175,
+          43.125
+        ],
+        [
+          "OIL",
+          "Cooking oil",
+          "L",
+          30,
+          0,
+          10.5,
+          0,
+          19.5,
+          2730,
+          140
+        ],
+        [
+          "SPICE",
+          "Salt and spice mix",
+          "kg",
+          5,
+          0,
+          1.2,
+          0,
+          3.8,
+          760,
+          200
+        ]
+      ],
+      "totals": [
+        "Total",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        8665,
+        null
+      ]
+    },
+    {
+      "title": "Packaging",
+      "columns": [
+        {
+          "key": "itemCode",
+          "header": "Item code",
+          "type": "TEXT"
+        },
+        {
+          "key": "item",
+          "header": "Item",
+          "type": "TEXT"
+        },
+        {
+          "key": "unit",
+          "header": "Unit",
+          "type": "TEXT"
+        },
+        {
+          "key": "opening",
+          "header": "Opening",
+          "type": "QTY"
+        },
+        {
+          "key": "receipts",
+          "header": "Receipts",
+          "type": "QTY"
+        },
+        {
+          "key": "issues",
+          "header": "Issues / sales",
+          "type": "QTY"
+        },
+        {
+          "key": "adjustments",
+          "header": "Adjustments",
+          "type": "QTY"
+        },
+        {
+          "key": "closing",
+          "header": "Closing",
+          "type": "QTY"
+        },
+        {
+          "key": "closingValue",
+          "header": "Closing value",
+          "type": "MONEY"
+        },
+        {
+          "key": "averageCost",
+          "header": "Avg cost",
+          "type": "RATE"
+        }
+      ],
+      "rows": [
+        [
+          "CARTON",
+          "Carton (20 packets)",
+          "pc",
+          30,
+          0,
+          9,
+          0,
+          21,
+          315,
+          15
+        ],
+        [
+          "POUCH",
+          "200 g pouch",
+          "pc",
+          500,
+          0,
+          194,
+          0,
+          306,
+          765,
+          2.5
+        ]
+      ],
+      "totals": [
+        "Total",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        1080,
+        null
+      ]
+    },
+    {
+      "title": "Finished goods",
+      "columns": [
+        {
+          "key": "itemCode",
+          "header": "Item code",
+          "type": "TEXT"
+        },
+        {
+          "key": "item",
+          "header": "Item",
+          "type": "TEXT"
+        },
+        {
+          "key": "unit",
+          "header": "Unit",
+          "type": "TEXT"
+        },
+        {
+          "key": "opening",
+          "header": "Opening",
+          "type": "QTY"
+        },
+        {
+          "key": "receipts",
+          "header": "Receipts",
+          "type": "QTY"
+        },
+        {
+          "key": "issues",
+          "header": "Issues / sales",
+          "type": "QTY"
+        },
+        {
+          "key": "adjustments",
+          "header": "Adjustments",
+          "type": "QTY"
+        },
+        {
+          "key": "closing",
+          "header": "Closing",
+          "type": "QTY"
+        },
+        {
+          "key": "closingValue",
+          "header": "Closing value",
+          "type": "MONEY"
+        },
+        {
+          "key": "averageCost",
+          "header": "Avg cost",
+          "type": "RATE"
+        }
+      ],
+      "rows": [
+        [
+          "MURUKKU200",
+          "Murukku 200 g",
+          "pkt",
+          50,
+          188,
+          150,
+          0,
+          88,
+          2053.95,
+          23.3403
+        ]
+      ],
+      "totals": [
+        "Total",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        2053.95,
+        null
+      ]
+    }
+  ]
+}

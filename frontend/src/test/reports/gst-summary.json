@@ -1,0 +1,371 @@
+{
+  "code": "gst-summary",
+  "title": "GST summary (outward supplies)",
+  "subject": null,
+  "from": "2026-11-01",
+  "to": "2026-11-30",
+  "periodLabel": "01-Nov-2026 to 30-Nov-2026",
+  "companyName": "Sample Murukku Foods",
+  "generatedAt": "2026-11-27T13:21:48.169351800Z",
+  "generatedBy": "auditor",
+  "sections": [
+    {
+      "title": "GSTR-1 B2B",
+      "columns": [
+        {
+          "key": "gstin",
+          "header": "Receiver GSTIN",
+          "type": "TEXT"
+        },
+        {
+          "key": "receiver",
+          "header": "Receiver",
+          "type": "TEXT"
+        },
+        {
+          "key": "invoiceNo",
+          "header": "Invoice no",
+          "type": "TEXT"
+        },
+        {
+          "key": "invoiceDate",
+          "header": "Invoice date",
+          "type": "DATE"
+        },
+        {
+          "key": "invoiceValue",
+          "header": "Invoice value",
+          "type": "MONEY"
+        },
+        {
+          "key": "placeOfSupply",
+          "header": "Place of supply",
+          "type": "TEXT"
+        },
+        {
+          "key": "rate",
+          "header": "Rate %",
+          "type": "PERCENT"
+        },
+        {
+          "key": "taxable",
+          "header": "Taxable",
+          "type": "MONEY"
+        },
+        {
+          "key": "igst",
+          "header": "IGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "cgst",
+          "header": "CGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "sgst",
+          "header": "SGST",
+          "type": "MONEY"
+        }
+      ],
+      "rows": [
+        [
+          "33AAACR5055K1Z5",
+          "Retailer A",
+          "INV/2026-27/0001",
+          "2026-11-28",
+          7875,
+          "Tamil Nadu (33)",
+          5,
+          7500,
+          0,
+          187.5,
+          187.5
+        ]
+      ],
+      "totals": [
+        "Total",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        7500,
+        0,
+        187.5,
+        187.5
+      ]
+    },
+    {
+      "title": "GSTR-1 B2CS",
+      "columns": [
+        {
+          "key": "placeOfSupply",
+          "header": "Place of supply",
+          "type": "TEXT"
+        },
+        {
+          "key": "supplyType",
+          "header": "Supply type",
+          "type": "TEXT"
+        },
+        {
+          "key": "rate",
+          "header": "Rate %",
+          "type": "PERCENT"
+        },
+        {
+          "key": "taxable",
+          "header": "Taxable",
+          "type": "MONEY"
+        },
+        {
+          "key": "igst",
+          "header": "IGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "cgst",
+          "header": "CGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "sgst",
+          "header": "SGST",
+          "type": "MONEY"
+        }
+      ],
+      "rows": [],
+      "totals": [
+        "Total",
+        null,
+        null,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "title": "GSTR-1 CDNR",
+      "columns": [
+        {
+          "key": "gstin",
+          "header": "Receiver GSTIN",
+          "type": "TEXT"
+        },
+        {
+          "key": "receiver",
+          "header": "Receiver",
+          "type": "TEXT"
+        },
+        {
+          "key": "noteNo",
+          "header": "Note no",
+          "type": "TEXT"
+        },
+        {
+          "key": "noteDate",
+          "header": "Note date",
+          "type": "DATE"
+        },
+        {
+          "key": "noteType",
+          "header": "Note type",
+          "type": "TEXT"
+        },
+        {
+          "key": "invoiceNo",
+          "header": "Against invoice",
+          "type": "TEXT"
+        },
+        {
+          "key": "placeOfSupply",
+          "header": "Place of supply",
+          "type": "TEXT"
+        },
+        {
+          "key": "noteValue",
+          "header": "Note value",
+          "type": "MONEY"
+        },
+        {
+          "key": "rate",
+          "header": "Rate %",
+          "type": "PERCENT"
+        },
+        {
+          "key": "taxable",
+          "header": "Taxable",
+          "type": "MONEY"
+        },
+        {
+          "key": "igst",
+          "header": "IGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "cgst",
+          "header": "CGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "sgst",
+          "header": "SGST",
+          "type": "MONEY"
+        }
+      ],
+      "rows": [],
+      "totals": [
+        "Total",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "title": "GSTR-1 HSN summary",
+      "columns": [
+        {
+          "key": "type",
+          "header": "B2B / B2C",
+          "type": "TEXT"
+        },
+        {
+          "key": "hsn",
+          "header": "HSN",
+          "type": "TEXT"
+        },
+        {
+          "key": "description",
+          "header": "Description",
+          "type": "TEXT"
+        },
+        {
+          "key": "uqc",
+          "header": "UQC",
+          "type": "TEXT"
+        },
+        {
+          "key": "rate",
+          "header": "Rate %",
+          "type": "PERCENT"
+        },
+        {
+          "key": "qty",
+          "header": "Total qty",
+          "type": "QTY"
+        },
+        {
+          "key": "totalValue",
+          "header": "Total value",
+          "type": "MONEY"
+        },
+        {
+          "key": "taxable",
+          "header": "Taxable",
+          "type": "MONEY"
+        },
+        {
+          "key": "igst",
+          "header": "IGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "cgst",
+          "header": "CGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "sgst",
+          "header": "SGST",
+          "type": "MONEY"
+        }
+      ],
+      "rows": [
+        [
+          "B2B",
+          "21069099",
+          "Murukku 200 g",
+          "PAC",
+          5,
+          150,
+          7875,
+          7500,
+          0,
+          187.5,
+          187.5
+        ]
+      ],
+      "totals": [
+        "Total",
+        null,
+        null,
+        null,
+        null,
+        null,
+        7875,
+        7500,
+        0,
+        187.5,
+        187.5
+      ]
+    },
+    {
+      "title": "GSTR-3B 3.1(a)",
+      "columns": [
+        {
+          "key": "nature",
+          "header": "Nature of supplies",
+          "type": "TEXT"
+        },
+        {
+          "key": "taxable",
+          "header": "Taxable",
+          "type": "MONEY"
+        },
+        {
+          "key": "igst",
+          "header": "IGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "cgst",
+          "header": "CGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "sgst",
+          "header": "SGST",
+          "type": "MONEY"
+        },
+        {
+          "key": "cess",
+          "header": "Cess",
+          "type": "MONEY"
+        }
+      ],
+      "rows": [
+        [
+          "(a) Outward taxable supplies (other than zero rated, nil rated and exempted)",
+          7500,
+          0,
+          187.5,
+          187.5,
+          0
+        ]
+      ],
+      "totals": null
+    }
+  ]
+}

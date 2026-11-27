@@ -18,12 +18,13 @@ interface CellProps {
   numeric?: boolean
 }
 
-export function Th({ numeric = false, className = '', ...rest }: ThHTMLAttributes<HTMLTableCellElement> & CellProps) {
+/** wrap: a long header may take two lines (report tables with many columns), so the figures stay in view. */
+export function Th({ numeric = false, wrap = false, className = '', ...rest }: ThHTMLAttributes<HTMLTableCellElement> & CellProps & { wrap?: boolean }) {
   return (
     <th
       scope="col"
       {...rest}
-      className={`border-b-2 border-ink px-3 py-3 font-semibold whitespace-nowrap ${numeric ? 'text-right' : 'text-left'} ${className}`}
+      className={`border-b-2 border-ink px-3 py-3 align-bottom font-semibold ${wrap ? '' : 'whitespace-nowrap'} ${numeric ? 'text-right' : 'text-left'} ${className}`}
     />
   )
 }

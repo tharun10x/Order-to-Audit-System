@@ -13,9 +13,10 @@ import { Panel } from '../../components/Panel'
 import { Table, Td, Th } from '../../components/Table'
 import { formatDate, formatMoney, formatNumber } from '../../lib/format'
 import { INVOICE_STATUS, PAYMENT_MODE, PAYMENT_RECORD_STATUS, PAYMENT_STATUS } from '../../lib/labels'
+import { saveFile } from '../../lib/saveFile'
 import { CancelInvoicePanel } from './CancelInvoicePanel'
 import { DispatchPanel } from './DispatchPanel'
-import { fetchInvoicePdf, saveFile, shareFile, whatsAppLink } from './invoiceFile'
+import { fetchInvoicePdf, shareFile, whatsAppLink } from './invoiceFile'
 
 /**
  * R10.5: an invoice as it was raised (the seller and buyer copied on it, not today's master data), with what

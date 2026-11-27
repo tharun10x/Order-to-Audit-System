@@ -1,0 +1,108 @@
+{
+  "businessDate": "2026-11-28",
+  "todaysOrders": {
+    "SUBMITTED": 1,
+    "APPROVED": 0,
+    "REJECTED": 0,
+    "INVOICED": 0,
+    "DISPATCHED": 1,
+    "CANCELLED": 0
+  },
+  "stockLevels": [
+    {
+      "itemCode": "MURUKKU200",
+      "itemName": "Murukku 200 g",
+      "kind": "FG",
+      "unit": "pkt",
+      "qtyOnHand": 88,
+      "reorderLevel": null,
+      "lowStock": false
+    },
+    {
+      "itemCode": "CARTON",
+      "itemName": "Carton (20 packets)",
+      "kind": "PACKAGING",
+      "unit": "pc",
+      "qtyOnHand": 21,
+      "reorderLevel": null,
+      "lowStock": false
+    },
+    {
+      "itemCode": "POUCH",
+      "itemName": "200 g pouch",
+      "kind": "PACKAGING",
+      "unit": "pc",
+      "qtyOnHand": 306,
+      "reorderLevel": null,
+      "lowStock": false
+    },
+    {
+      "itemCode": "FLOUR",
+      "itemName": "Flour",
+      "kind": "RAW",
+      "unit": "kg",
+      "qtyOnHand": 120,
+      "reorderLevel": null,
+      "lowStock": false
+    },
+    {
+      "itemCode": "OIL",
+      "itemName": "Cooking oil",
+      "kind": "RAW",
+      "unit": "L",
+      "qtyOnHand": 19.5,
+      "reorderLevel": null,
+      "lowStock": false
+    },
+    {
+      "itemCode": "SPICE",
+      "itemName": "Salt and spice mix",
+      "kind": "RAW",
+      "unit": "kg",
+      "qtyOnHand": 3.8,
+      "reorderLevel": null,
+      "lowStock": false
+    }
+  ],
+  "varianceAlerts": [
+    {
+      "runNo": "RUN/2026-27/0001",
+      "runDate": "2026-11-28",
+      "productCode": "MURUKKU200",
+      "subject": "OIL",
+      "variancePct": 5
+    },
+    {
+      "runNo": "RUN/2026-27/0001",
+      "runDate": "2026-11-28",
+      "productCode": "MURUKKU200",
+      "subject": "POUCH",
+      "variancePct": 3.19
+    },
+    {
+      "runNo": "RUN/2026-27/0001",
+      "runDate": "2026-11-28",
+      "productCode": "MURUKKU200",
+      "subject": "YIELD",
+      "variancePct": -6
+    }
+  ],
+  "costPerPacket": [
+    {
+      "productCode": "MURUKKU200",
+      "productName": "Murukku 200 g",
+      "runNo": "RUN/2026-27/0001",
+      "runDate": "2026-11-28",
+      "costPerPacket": 31.1436,
+      "costPerPacketRounded": 31.14
+    }
+  ],
+  "totalOutstanding": 3875,
+  "topOutstanding": [
+    {
+      "customerId": 1,
+      "customerName": "Retailer A",
+      "outstanding": 3875
+    }
+  ]
+}

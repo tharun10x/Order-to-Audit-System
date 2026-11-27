@@ -7,18 +7,6 @@ export function fetchInvoicePdf(invoice: Invoice): Promise<DownloadedFile> {
   return download(`/api/invoices/${invoice.id}/pdf`, `${invoice.invoiceNo.replaceAll('/', '-')}.pdf`)
 }
 
-/** Saves a downloaded file through a temporary link, under the server's file name. */
-export function saveFile(file: DownloadedFile): void {
-  const url = URL.createObjectURL(file.blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = file.fileName
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
-}
-
 /** The message that goes with a shared invoice. */
 export function shareText(invoice: Invoice): string {
   return `Invoice ${invoice.invoiceNo} for ${invoice.buyer.name}: ${formatMoney(invoice.total, { withSymbol: true })}.`
