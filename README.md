@@ -8,9 +8,9 @@ Demo video: [LINK]
 > - Every number in the section 5 benchmark matches the brief. Each one is checked by an automated test (see [Benchmark results](#benchmark-results)).
 > - Cost per packet is **₹31.14** (weighted average cost, with labour and gas charged to the run).
 > - One command starts the database, one starts the backend and one starts the frontend (not yet one Docker command for the whole stack). Test logins for all five roles are [below](#test-logins).
-> - The whole benchmark can be walked through in the browser: login, salesman ordering on a phone, admin approval with the stock check, GST invoices with PDF download and sharing, dispatch, payments with outstanding and ageing, purchases, production runs with variances and cost per packet, and stock balances with the ledger.
+> - All nine benchmark steps run in the browser: login, salesman ordering on a phone, admin approval with the stock check, GST invoices with PDF download and sharing, dispatch, payments with outstanding and ageing, purchases, production runs with variances and cost per packet, stock balances with the ledger, and the month's reports with CSV, Excel and PDF downloads.
 > - The admin maintains master data on screen: items, versioned recipes (with copy-ingredients-from), customers and suppliers. Adding a 500 g pack takes a few minutes, without code changes ([walkthrough](#adding-a-new-pack-size-the-500-g-pack)).
-> - The report and dashboard screens are still to come. Reports are exported through the API as CSV, Excel or PDF ([known gaps](#known-gaps)).
+> - The owner has a one-screen dashboard (outstanding, today's orders, cost per packet, variance alerts, low stock), and each salesman has a *My sales* page for their own customers.
 
 ---
 
@@ -280,8 +280,8 @@ These users exist only in the `dev` and `test` profiles. They are dummy credenti
 | Salesman (Distributor B) | `salesman_b` | `Sales@123` | New order (mobile layout) |
 | Factory admin | `admin` | `Admin@123` | Orders |
 | Production supervisor | `production` | `Prod@123` | Production runs |
-| Auditor (read-only) | `auditor` | `Audit@123` | Reports (no report screen yet; the other pages open read-only) |
-| Owner (read-only) | `owner` | `Owner@123` | Reports (no report screen yet; the other pages open read-only) |
+| Auditor (read-only) | `auditor` | `Audit@123` | Reports (the other pages open read-only) |
+| Owner (read-only) | `owner` | `Owner@123` | Dashboard (Reports and the other pages open read-only) |
 
 Each role sees only its own screens and endpoints. Any other request gets HTTP 403. A salesman sees only their own customers and orders, and asking for someone else's order returns 404, so it doesn't even reveal that the order exists.
 
@@ -291,7 +291,7 @@ Each role sees only its own screens and endpoints. Any other request gets HTTP 4
 
 ### In the browser
 
-The benchmark in order, each step as the right user:
+All nine steps of the brief's benchmark, in order, each as the right user (steps 2 and 3 of the brief, the run and its actuals, are one step here):
 
 1. **Production:** log in as `production`. *Purchases → Record purchase*: 60 kg flour at ₹45 from Sample Flour Mills. *Stock* then shows flour 160 kg at ₹43.125.
 2. **Production:** *Production runs → New run* for Murukku 200 g, 1 batch. Enter the actuals (oil in L or ml): flour 40 kg, oil 10.5 L, spice 1.2 kg, pouches 194 with 6 damaged, cartons 9, good output 188. *Post run* first lists what leaves and enters stock. The posted run shows oil **+5.00% Flagged** and yield **−6.00% Flagged**.
@@ -300,8 +300,17 @@ The benchmark in order, each step as the right user:
 5. **Salesman B:** 120 packets for Distributor B (IGST). The admin sees **Short by 32** and can only approve the 88 available.
 6. **Admin:** *Payments → Record payment*: ₹4,000 from Retailer A, allocated to the invoice (the allocation must equal the amount). *Customer outstanding* shows ₹3,875.00 with ageing.
 7. **Production:** on the posted run, add labour ₹1,200 and gas/power ₹600. The cost block shows **₹31.14 per packet**.
+8. **Auditor:** log in as `auditor`; *Reports* opens on the business month (1 to 30 November). Pick each report to preview it: sales register total ₹7,875.00, GST summary CGST ₹187.50 + SGST ₹187.50, purchase register ₹2,700.00, stock summary flour 100 + 60 − 40 = 120 and finished goods 50 + 188 − 150 = 88, production report oil **+5.00% Flagged** and yield **−6.00% Flagged** with cost per packet 31.14, collections ₹4,000.00, and outstanding ₹3,875.00 in the 0–30 day bucket. *Download CSV / Excel / PDF* saves the same report as a file.
 
 Auditor and owner open the pages read-only, with all actions hidden. The stock ledger links each movement to its run, invoice or purchase.
+
+### Reports, dashboard and My sales
+
+- **Reports** (auditor's home; also for owner, admin, and production for the reports it may open): pick a report, a period (defaults to the business month; outstanding asks for one "as of" day), and for the stock ledger an item. The preview shows each section as its own table with a bold totals row and flagged variances in red with the word "Flagged". The downloads are the server's CSV, Excel and PDF files, under the server's file name. Production sees only the stock summary, stock ledger and production report.
+- **Dashboard** (the owner's home; the admin can open it too): total outstanding and the top customers, today's orders by status, the latest cost per packet of each product, variance alerts of the last 30 days with run number and percentage, and stock levels with low-stock flags. Plain figures and tables, no charts.
+- **My sales** (salesman, phone layout): the salesman's own customers with order count, invoiced value and outstanding for a period (defaults to the business month), with totals.
+
+The browser only formats what the server sends: every figure, total included, comes from the API.
 
 ### Masters
 
@@ -323,7 +332,7 @@ This is how a typical interview-style change ("the factory now sells a 500 g pac
 
 The copied ingredients are an independent copy, so a later change to the 200 g recipe does not change the 500 g one (R5.10). The same flow is also covered by an automated backend test (`BomApiTest`).
 
-### Through the API (reports and the dashboard)
+### Through the API
 
 Every endpoint is under `/api` and needs a token from the login call. In PowerShell:
 
@@ -416,7 +425,7 @@ For comparison, FIFO would give ₹30.90 and last purchase price ₹31.54.
 
 ## Features against the brief's tiers
 
-✔ built and tested, with a screen · ◐ built and tested in the backend (API), screen still to come · ✗ not built yet
+✔ built and tested, with a screen · ◐ partly built (see the notes) · ✗ not built yet
 
 ### Must have
 
@@ -429,7 +438,7 @@ For comparison, FIFO would give ₹30.90 and last purchase price ₹31.54.
 | Production run updates raw-material and finished-goods stock | ✔ | New run, actuals in any allowed unit, post with a confirmation of the stock movements; shortages listed per item |
 | Planned vs actual consumption and yield, with variance | ✔ | Per item and for yield, with a 3% tolerance stored in the company settings; flags shown as the percentage and the word |
 | Stock summary and stock ledger | ✔ | Balances by group and a ledger screen linking each movement to its source document; the exported report refuses to print if opening + in − out ≠ closing |
-| Sales register and stock report, exportable to Excel/CSV | ◐ | CSV, Excel and PDF for every report through the API; no report screen yet |
+| Sales register and stock report, exportable to Excel/CSV | ✔ | Reports screen with a preview of every section and CSV, Excel and PDF downloads; each role sees only its reports |
 
 ### Should have
 
@@ -438,9 +447,9 @@ For comparison, FIFO would give ₹30.90 and last purchase price ₹31.54.
 | Purchases and supplier records | ✔ | Purchase screen with a unit selector (for example g → kg), weighted average updated on each receipt. Suppliers are maintained on the masters screen |
 | Payments, outstanding and ageing | ✔ | Payment allocated to invoices (must equal the amount); ageing in 0–30 / 31–60 / 61–90 / 90+ day buckets; outstanding as of any past date |
 | Cost per packet with overheads | ✔ | Overheads entered on the run screen, cost block with margin. Monthly overheads shared by kg of output in the report |
-| GST summary report | ◐ | Shaped like GSTR-1 (B2B, B2CS, credit notes, HSN summary) and GSTR-3B 3.1(a) |
-| Variance alerts beyond a tolerance | ✔ | Flags on the run and the runs list; also in the production report and the dashboard API |
-| Owner dashboard | ◐ | Today's orders, stock levels, variance alerts, cost per packet, top 5 outstanding customers (API only, no screen yet) |
+| GST summary report | ✔ | Shaped like GSTR-1 (B2B, B2CS, credit notes, HSN summary) and GSTR-3B 3.1(a); on the reports screen and as CSV, Excel or PDF |
+| Variance alerts beyond a tolerance | ✔ | Flags on the run and the runs list; also in the production report and on the owner dashboard |
+| Owner dashboard | ✔ | The owner's home: total outstanding and top 5 customers, today's orders by status, cost per packet, variance alerts, stock levels with low-stock flags |
 
 ### Stretch goals
 
@@ -448,7 +457,7 @@ For comparison, FIFO would give ₹30.90 and last purchase price ₹31.54.
 | --- | :-: | --- |
 | Offline orders with sync | ◐ | Each order carries an ID made on the phone, so re-sending after a network drop never creates a duplicate. Automatic background sync isn't built yet |
 | Production planning from pending orders | ◐ | A shortage shows how many batches are needed ("1 batch") |
-| Reorder levels and low-stock alerts | ◐ | Optional reorder level per item, flagged on the dashboard |
+| Reorder levels and low-stock alerts | ✔ | Optional reorder level on the item screen; stock below it is flagged on the dashboard |
 | Batch and expiry, GPS, Tally export, e-Invoice, Tamil UI | ✗ | Left for later, as the brief suggests: must-haves first |
 
 ### Things the brief asks for that run through everything
@@ -468,7 +477,7 @@ cd backend
 .\mvnw.cmd test          # about 620 backend tests; needs Docker running
 
 cd ..\frontend
-npm test                 # about 85 frontend tests
+npm test                 # about 107 frontend tests
 ```
 
 The backend tests run against a **real PostgreSQL** started by Testcontainers, not an in-memory imitation, so the database constraints, row locks and views are tested too. Tests always run "on" 28 November 2026, so the results don't depend on the day you run them.
@@ -484,7 +493,7 @@ The backend tests run against a **real PostgreSQL** started by Testcontainers, n
 | `ReportExportTest` | CSV, Excel and PDF output |
 | `MastersApiTest`, `BomApiTest` | GSTIN and state checks, deactivation, base-unit lock, price changes affect only new orders, recipe versions, and a 500 g pack produced and sold end to end |
 
-GitHub Actions runs the full backend suite on every push to `main` ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
+GitHub Actions runs both suites on every push and pull request to `main` ([.github/workflows/ci.yml](.github/workflows/ci.yml)): the backend job runs all backend tests against PostgreSQL, and the frontend job (Node 22) runs `npm ci`, the build, the lint and the tests.
 
 ---
 
@@ -515,7 +524,8 @@ GitHub Actions runs the full backend suite on every push to `main` ([.github/wor
 │       ├── migration/           V1 schema, V2–V3 numbering (Flyway)
 │       └── seed/                V1000 benchmark seed (dev and test only)
 └── frontend/                    React + TypeScript (Vite)
-    └── src/features/            login, salesman, admin (orders), billing, payments, purchases, production, stock, masters
+    └── src/features/            login, salesman (orders, my sales), admin (orders), billing, payments, purchases,
+                                 production, stock, masters, reports, owner (dashboard)
 ```
 
 Each business area has the same four layers: `entity`, `repository`, `service` and `web`. Controllers never hand database entities to the outside; they return small response objects.
@@ -544,7 +554,6 @@ The full list, with the reasoning for each, is in [business-rules.md §17](docs/
 I would rather be upfront about these than have them found:
 
 - **No user management.** Users come from the seed, so outside the dev and test profiles there is no way to create a user.
-- **No report or dashboard screens yet.** Every report is exported through the API as CSV, Excel or PDF (`GET /api/reports/{report}?format=`), and the dashboard is an API endpoint. Auditor and owner can already open the other pages read-only.
 - **Master lists follow the backend's read permissions.** Production cannot see the customer list, and the auditor and owner cannot see the supplier list (the supplier names still appear on purchases).
 - **Reversals are planned but not built.** The database is ready (REVERSED status and REVERSAL movements), but the services to reverse a purchase, payment or production run aren't written. Cancelling an invoice with a credit note does work.
 - **No manual stock adjustment endpoint** and **no audit-log viewer** yet. The audit rows are written, though.
