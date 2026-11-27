@@ -164,7 +164,7 @@ erDiagram
     ITEM ||--o{ STOCK_MOVEMENT : "one ledger for all items"
 ```
 
-Raw materials, packaging and finished goods all sit in one `item` table, so they share one ledger. The full diagram with columns is in the [design note](docs/design-note/design-note.md).
+Raw materials, packaging and finished goods all sit in one `item` table, so they share one ledger. The full ER diagram (all 27 tables) is in the [design note](docs/design-note/design-note.md), also as an [image](docs/er-diagram/er-diagram.png) ([SVG](docs/er-diagram/er-diagram.svg)).
 
 ---
 
@@ -505,7 +505,9 @@ GitHub Actions runs both suites on every push and pull request to `main` ([.gith
 │   ├── problem-statement.md     the official brief
 │   ├── design-note/
 │   │   ├── design-note.md       data model, stock and BOM maths, costing method (the 2-page note)
-│   │   └── business-rules.md    every rule (R2.1 … R15.7), benchmark workings, assumptions A1–A17
+│   │   ├── design-note.pdf      the same note as a 2-page A4 PDF
+│   │   └── business-rules.md    every rule (R2.1 … R15.7), benchmark workings, assumptions A1–A17, design-note details (§18)
+│   ├── er-diagram/              the full ER diagram as PNG and SVG
 │   └── design/ui-guidelines.md  screen and layout rules for the frontend
 ├── backend/                     Spring Boot application
 │   └── src/main/java/com/ordertoaudit/
@@ -567,6 +569,6 @@ I would rather be upfront about these than have them found:
 
 ## Further reading
 
-- [Design note](docs/design-note/design-note.md): the data model, how stock and BOM consumption are computed, and the costing method, in two pages.
+- [Design note](docs/design-note/design-note.md) ([PDF](docs/design-note/design-note.pdf)): the data model with the full [ER diagram](docs/er-diagram/er-diagram.png), how stock and BOM consumption are computed, and the costing method, in two pages.
 - [Business rules](docs/design-note/business-rules.md): every rule the code implements, numbered so that code comments and test names can point to them, plus the full benchmark workings.
 - [Problem statement](docs/problem-statement.md): the original brief.
