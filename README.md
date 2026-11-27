@@ -9,7 +9,8 @@ Demo video: [LINK]
 > - Cost per packet is **₹31.14** (weighted average cost, with labour and gas charged to the run).
 > - One command starts the database, one starts the backend and one starts the frontend (not yet one Docker command for the whole stack). Test logins for all five roles are [below](#test-logins).
 > - The whole benchmark can be walked through in the browser: login, salesman ordering on a phone, admin approval with the stock check, GST invoices with PDF download and sharing, dispatch, payments with outstanding and ageing, purchases, production runs with variances and cost per packet, and stock balances with the ledger.
-> - Master data (customers, suppliers, items, versioned recipes) can be created and edited through the API, which is tested; the screens for it, and the report and dashboard screens, are still to come. Reports are exported through the API as CSV, Excel or PDF ([known gaps](#known-gaps)).
+> - The admin maintains master data on screen: items, versioned recipes (with copy-ingredients-from), customers and suppliers. Adding a 500 g pack takes a few minutes, without code changes ([walkthrough](#adding-a-new-pack-size-the-500-g-pack)).
+> - The report and dashboard screens are still to come. Reports are exported through the API as CSV, Excel or PDF ([known gaps](#known-gaps)).
 
 ---
 
@@ -300,9 +301,29 @@ The benchmark in order, each step as the right user:
 6. **Admin:** *Payments → Record payment*: ₹4,000 from Retailer A, allocated to the invoice (the allocation must equal the amount). *Customer outstanding* shows ₹3,875.00 with ageing.
 7. **Production:** on the posted run, add labour ₹1,200 and gas/power ₹600. The cost block shows **₹31.14 per packet**.
 
-Auditor and owner can open every page read-only, with all actions hidden. The stock ledger links each movement to its run, invoice or purchase.
+Auditor and owner open the pages read-only, with all actions hidden. The stock ledger links each movement to its run, invoice or purchase.
 
-### Through the API (masters, reports and the dashboard)
+### Masters
+
+*Masters* in the top bar has four tabs: **Items**, **Recipes**, **Customers** and **Suppliers**. Each list filters by active, inactive or all. Only the admin creates, edits, deactivates and reactivates; the other roles see the same records read-only. Each role sees the tabs its backend permissions allow: production sees items, recipes and suppliers, while the auditor and owner see items, recipes and customers.
+
+- **Items:** the code and kind are fixed once created. After an item has stock movements or is used in a recipe, its base unit is shown as locked, with the reason. Finished goods also have the HSN code, GST rate, price, pack weight and packets per carton.
+- **Recipes:** each product's version history, with the active version marked. *New version* starts from the newest version's lines. *Copy ingredients from…* copies another product's active ingredients. A new version is saved inactive, and *Activate* asks for confirmation first. Existing runs are not affected: they keep the quantities they were created with.
+- **Customers:** GSTIN (checked against the state), state, and the salesman who looks after the customer. **Suppliers:** the same without a salesman; the state is optional unless a GSTIN is given.
+
+### Adding a new pack size: the 500 g pack
+
+This is how a typical interview-style change ("the factory now sells a 500 g pack") is handled without code changes. I walked through it end to end in the browser on a fresh database:
+
+1. **Admin, *Masters → Items*:** create the packaging item *500 g pouch* (counted in pieces). Then create the finished good *Murukku 500 g*: HSN 21069099, GST 5%, ₹110 per packet, pack weight 0.5 kg, 10 packets per carton.
+2. **Admin, *Masters → Recipes*:** pick Murukku 500 g and click *New version*. *Copy ingredients from* Murukku 200 g brings in flour 40 kg, oil 10 L and spice 1.2 kg per batch. Add 80 pouches and 8 cartons, and set 80 packets per batch (the same 40 kg of dough). Save the version, then *Activate* it.
+3. **Production:** record a purchase of 500 g pouches (a new item has no stock), then run one batch of Murukku 500 g and post it. 80 packets enter stock.
+4. **Salesman A:** the new product appears on the phone order screen: 2 cartons (20 packets) for Retailer A, ₹2,200 + ₹55 CGST + ₹55 SGST = ₹2,310.
+5. **Admin:** approve the order, create the invoice (the order links to it), and record the dispatch. *Stock* shows the 500 g pack going down by 20.
+
+The copied ingredients are an independent copy, so a later change to the 200 g recipe does not change the 500 g one (R5.10). The same flow is also covered by an automated backend test (`BomApiTest`).
+
+### Through the API (reports and the dashboard)
 
 Every endpoint is under `/api` and needs a token from the login call. In PowerShell:
 
@@ -402,7 +423,7 @@ For comparison, FIFO would give ₹30.90 and last purchase price ₹31.54.
 | Requirement | Status | Notes |
 | --- | :-: | --- |
 | Login with at least three roles | ✔ | Five roles, JWT, role checks on every endpoint, and a test that fails if any endpoint is left unprotected |
-| Product, customer, raw-material and BOM masters | ◐ | Create, edit and deactivate customers, suppliers and items; versioned recipes with copy-ingredients-from and activation; all audited and tested through the API. Screens still to come |
+| Product, customer, raw-material and BOM masters | ✔ | Masters screens for items, versioned recipes (copy ingredients from another product, activation with confirmation), customers and suppliers: create, edit, deactivate and reactivate, all audited. Read-only for the other roles |
 | Mobile-friendly order entry and admin approval | ✔ | Phone-first salesman screen, admin approval with stock check, quantity and price edits |
 | GST invoice as PDF | ✔ | GSTIN, HSN, CGST/SGST or IGST by place of supply, amount in words, numbering by financial year. Download and share (WhatsApp) from the invoice screen; cancel with a credit note |
 | Production run updates raw-material and finished-goods stock | ✔ | New run, actuals in any allowed unit, post with a confirmation of the stock movements; shortages listed per item |
@@ -414,7 +435,7 @@ For comparison, FIFO would give ₹30.90 and last purchase price ₹31.54.
 
 | Requirement | Status | Notes |
 | --- | :-: | --- |
-| Purchases and supplier records | ✔ | Purchase screen with a unit selector (for example g → kg), weighted average updated on each receipt. Supplier create/edit is API only |
+| Purchases and supplier records | ✔ | Purchase screen with a unit selector (for example g → kg), weighted average updated on each receipt. Suppliers are maintained on the masters screen |
 | Payments, outstanding and ageing | ✔ | Payment allocated to invoices (must equal the amount); ageing in 0–30 / 31–60 / 61–90 / 90+ day buckets; outstanding as of any past date |
 | Cost per packet with overheads | ✔ | Overheads entered on the run screen, cost block with margin. Monthly overheads shared by kg of output in the report |
 | GST summary report | ◐ | Shaped like GSTR-1 (B2B, B2CS, credit notes, HSN summary) and GSTR-3B 3.1(a) |
@@ -447,7 +468,7 @@ cd backend
 .\mvnw.cmd test          # about 620 backend tests; needs Docker running
 
 cd ..\frontend
-npm test                 # about 60 frontend tests
+npm test                 # about 85 frontend tests
 ```
 
 The backend tests run against a **real PostgreSQL** started by Testcontainers, not an in-memory imitation, so the database constraints, row locks and views are tested too. Tests always run "on" 28 November 2026, so the results don't depend on the day you run them.
@@ -494,7 +515,7 @@ GitHub Actions runs the full backend suite on every push to `main` ([.github/wor
 │       ├── migration/           V1 schema, V2–V3 numbering (Flyway)
 │       └── seed/                V1000 benchmark seed (dev and test only)
 └── frontend/                    React + TypeScript (Vite)
-    └── src/features/            login, salesman, admin (orders), billing, payments, purchases, production, stock
+    └── src/features/            login, salesman, admin (orders), billing, payments, purchases, production, stock, masters
 ```
 
 Each business area has the same four layers: `entity`, `repository`, `service` and `web`. Controllers never hand database entities to the outside; they return small response objects.
@@ -522,8 +543,9 @@ The full list, with the reasoning for each, is in [business-rules.md §17](docs/
 
 I would rather be upfront about these than have them found:
 
-- **No master-data screens yet.** Creating and editing customers, suppliers, items and recipes works through the API and is tested, but has no screen. There is no user management: users come from the seed, so outside the dev and test profiles there is no way to create a user.
-- **No report or dashboard screens yet.** Every report is exported through the API as CSV, Excel or PDF (`GET /api/reports/{report}?format=`), and the dashboard is an API endpoint. Auditor and owner can already open every other page read-only.
+- **No user management.** Users come from the seed, so outside the dev and test profiles there is no way to create a user.
+- **No report or dashboard screens yet.** Every report is exported through the API as CSV, Excel or PDF (`GET /api/reports/{report}?format=`), and the dashboard is an API endpoint. Auditor and owner can already open the other pages read-only.
+- **Master lists follow the backend's read permissions.** Production cannot see the customer list, and the auditor and owner cannot see the supplier list (the supplier names still appear on purchases).
 - **Reversals are planned but not built.** The database is ready (REVERSED status and REVERSAL movements), but the services to reverse a purchase, payment or production run aren't written. Cancelling an invoice with a credit note does work.
 - **No manual stock adjustment endpoint** and **no audit-log viewer** yet. The audit rows are written, though.
 - **Offline orders:** the server side is safe against duplicates, but there is no automatic background sync from the phone yet.
