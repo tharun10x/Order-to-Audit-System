@@ -2,7 +2,7 @@
 
 **A working prototype for a small South Indian snack factory. It follows one transaction from the salesman's order all the way to the auditor's monthly report.**
 
-Demo video: [LINK]
+Demo video: https://youtu.be/rr3DiN1A9N4
 
 > **Short version for evaluators**
 > - Every number in the section 5 benchmark matches the brief. Each one is checked by an automated test (see [Benchmark results](#benchmark-results)).
