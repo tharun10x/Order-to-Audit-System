@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { Link } from 'react-router'
 
 import { useOrder, useStockCheck } from '../../api/queries'
 import type { Order } from '../../api/types'
@@ -71,8 +72,8 @@ function OrderPanel({ order, notice }: { order: Order; notice: string | null }) 
   if (order.approvedBy) {
     facts.push(['Approved by', order.approvedBy])
   }
-  if (order.invoiceNo) {
-    facts.push(['Invoice', order.invoiceNo])
+  if (order.invoiceId && order.invoiceNo) {
+    facts.push(['Invoice', <Link key="invoice" to={`/invoices/${order.invoiceId}`} className="text-primary hover:underline">{order.invoiceNo}</Link>])
   }
   if (order.status === 'REJECTED' && order.remarks) {
     facts.push(['Reason', order.remarks])

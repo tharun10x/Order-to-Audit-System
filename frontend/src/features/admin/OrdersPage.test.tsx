@@ -123,4 +123,13 @@ describe('Admin orders', () => {
     expect(await screen.findByText('Invoice INV/2026-27/0001 created.')).toBeInTheDocument()
     expect(calls.find((call) => call.method === 'POST')!.body).toEqual({ orderId: 7, invoiceDate: BUSINESS_DATE })
   })
+
+  it('links an invoiced order to its invoice', async () => {
+    const invoiced = order({ id: 1, orderNo: 'SO/2026-27/0001', status: 'INVOICED', invoiceId: 10, invoiceNo: 'INV/2026-27/0001' })
+    fakeBackend({ ...meRoute('AUDITOR'), 'GET /api/orders': [invoiced], 'GET /api/orders/1': invoiced })
+    renderApp('/orders/1', 'AUDITOR')
+
+    const link = await screen.findByRole('link', { name: 'INV/2026-27/0001' })
+    expect(link).toHaveAttribute('href', '/invoices/10')
+  })
 })

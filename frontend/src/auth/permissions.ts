@@ -18,6 +18,14 @@ export const PAGE_ROLES = {
   production: READ_OPERATIONS,
   newRun: ['PRODUCTION'] as Role[],
   stock: READ_OPERATIONS,
+  // Masters (R5): read-only for everyone but the admin. Each list is open to the roles its backend list allows:
+  // customers to the accounts roles, suppliers to whoever records purchases.
+  masterItems: READ_OPERATIONS,
+  masterRecipes: READ_OPERATIONS,
+  masterCustomers: READ_ACCOUNTS,
+  masterSuppliers: ['ADMIN', 'PRODUCTION'] as Role[],
+  /** The new-item, new-customer, new-supplier and new-recipe-version pages. */
+  manageMasters: ['ADMIN'] as Role[],
 }
 
 /** Actions inside pages. */
@@ -27,6 +35,20 @@ export const can = {
   recordPurchase: (role: Role) => PAGE_ROLES.recordPurchase.includes(role),
   /** Create runs, enter actuals, post, cancel, add overheads (R8: production only). */
   runProduction: (role: Role) => role === 'PRODUCTION',
+  /** Create, edit, deactivate and reactivate masters; save and activate recipe versions (R5: admin only). */
+  manageMasters: (role: Role) => PAGE_ROLES.manageMasters.includes(role),
+}
+
+/** The masters area's tabs, in order; each role sees the ones it can open. */
+const MASTERS_TABS = [
+  { to: '/masters/items', label: 'Items', roles: PAGE_ROLES.masterItems },
+  { to: '/masters/recipes', label: 'Recipes', roles: PAGE_ROLES.masterRecipes },
+  { to: '/masters/customers', label: 'Customers', roles: PAGE_ROLES.masterCustomers },
+  { to: '/masters/suppliers', label: 'Suppliers', roles: PAGE_ROLES.masterSuppliers },
+]
+
+export function mastersTabs(role: Role): { to: string; label: string }[] {
+  return MASTERS_TABS.filter((tab) => tab.roles.includes(role))
 }
 
 /** The top bar's pages for each role, in order. */
@@ -38,11 +60,13 @@ export const NAV: Record<Role, { to: string; label: string }[]> = {
     { to: '/purchases', label: 'Purchases' },
     { to: '/production/runs', label: 'Production' },
     { to: '/stock', label: 'Stock' },
+    { to: '/masters', label: 'Masters' },
   ],
   PRODUCTION: [
     { to: '/production/runs', label: 'Production runs' },
     { to: '/purchases', label: 'Purchases' },
     { to: '/stock', label: 'Stock' },
+    { to: '/masters', label: 'Masters' },
   ],
   AUDITOR: [
     { to: '/reports', label: 'Reports' },
@@ -52,6 +76,7 @@ export const NAV: Record<Role, { to: string; label: string }[]> = {
     { to: '/purchases', label: 'Purchases' },
     { to: '/production/runs', label: 'Production' },
     { to: '/stock', label: 'Stock' },
+    { to: '/masters', label: 'Masters' },
   ],
   OWNER: [
     { to: '/reports', label: 'Reports' },
@@ -61,6 +86,7 @@ export const NAV: Record<Role, { to: string; label: string }[]> = {
     { to: '/purchases', label: 'Purchases' },
     { to: '/production/runs', label: 'Production' },
     { to: '/stock', label: 'Stock' },
+    { to: '/masters', label: 'Masters' },
   ],
   SALESMAN: [],
 }

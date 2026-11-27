@@ -12,6 +12,9 @@ export const retailerA: Customer = {
   address: 'Tiruchirappalli, Tamil Nadu',
   phone: null,
   intraState: true,
+  salesmanId: 3,
+  salesmanName: 'Salesman A',
+  active: true,
 }
 
 export const distributorB: Customer = {
@@ -24,6 +27,9 @@ export const distributorB: Customer = {
   address: 'Bengaluru, Karnataka',
   phone: null,
   intraState: false,
+  salesmanId: 4,
+  salesmanName: 'Salesman B',
+  active: true,
 }
 
 export const murukku: Product = {
@@ -49,6 +55,7 @@ export function order(overrides: Partial<Order> = {}): Order {
     approvedBy: null,
     approvedAt: null,
     taxableValue: 6000,
+    invoiceId: null,
     invoiceNo: null,
     lines: [{ itemCode: 'MURUKKU200', itemName: 'Murukku 200 g', qty: 120, approvedQty: null, rate: 50, taxableValue: 6000 }],
     ...overrides,
@@ -65,13 +72,30 @@ export const shortStockCheck: StockCheck = {
 
 // ---------------------------------------------------------------- milestone 2
 
+/** A raw material or packaging item as GET /api/items sends it: no finished-goods fields. */
+export function material(code: string, name: string, kind: 'RAW' | 'PACKAGING', baseUnit: string, units: string[],
+  overrides: Partial<Item> = {}): Item {
+  return {
+    code, name, kind, baseUnit, units, hasActiveBom: false, reorderLevel: null, hsnCode: null, gstRate: null,
+    sellingPrice: null, packWeightKg: null, packetsPerCarton: null, active: true, baseUnitLockReason: null, ...overrides,
+  }
+}
+
+export const murukkuItem: Item = {
+  code: 'MURUKKU200', name: 'Murukku 200 g', kind: 'FG', baseUnit: 'pkt', units: ['pkt', 'ctn'], hasActiveBom: true,
+  reorderLevel: null, hsnCode: '21069099', gstRate: 5, sellingPrice: 50, packWeightKg: 0.2, packetsPerCarton: 20,
+  active: true, baseUnitLockReason: 'The base unit stays pkt: MURUKKU200 has stock movements, and the ledger quantities are in pkt',
+}
+
 export const items: Item[] = [
-  { code: 'MURUKKU200', name: 'Murukku 200 g', kind: 'FG', baseUnit: 'pkt', units: ['pkt', 'ctn'], hasActiveBom: true },
-  { code: 'CARTON', name: 'Carton (20 packets)', kind: 'PACKAGING', baseUnit: 'pc', units: ['pc'], hasActiveBom: false },
-  { code: 'POUCH', name: '200 g pouch', kind: 'PACKAGING', baseUnit: 'pc', units: ['pc'], hasActiveBom: false },
-  { code: 'FLOUR', name: 'Flour', kind: 'RAW', baseUnit: 'kg', units: ['kg', 'g'], hasActiveBom: false },
-  { code: 'OIL', name: 'Cooking oil', kind: 'RAW', baseUnit: 'L', units: ['L', 'ml'], hasActiveBom: false },
-  { code: 'SPICE', name: 'Salt and spice mix', kind: 'RAW', baseUnit: 'kg', units: ['kg', 'g'], hasActiveBom: false },
+  murukkuItem,
+  material('CARTON', 'Carton (20 packets)', 'PACKAGING', 'pc', ['pc']),
+  material('POUCH', '200 g pouch', 'PACKAGING', 'pc', ['pc']),
+  material('FLOUR', 'Flour', 'RAW', 'kg', ['kg', 'g'], {
+    baseUnitLockReason: 'The base unit stays kg: FLOUR has stock movements, and the ledger quantities are in kg',
+  }),
+  material('OIL', 'Cooking oil', 'RAW', 'L', ['L', 'ml']),
+  material('SPICE', 'Salt and spice mix', 'RAW', 'kg', ['kg', 'g']),
 ]
 
 /** Retailer A's benchmark invoice, dispatched, nothing paid yet. */

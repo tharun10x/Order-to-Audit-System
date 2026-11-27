@@ -1,5 +1,5 @@
 import type {
-  InvoicePaymentStatus, InvoiceStatus, ItemKind, MovementType, OverheadType, PaymentMode, PaymentStatus, RunStatus,
+  CustomerType, InvoicePaymentStatus, InvoiceStatus, ItemKind, MovementType, OverheadType, PaymentMode, PaymentStatus, RunStatus,
 } from '../api/types'
 
 /** Words for the backend's codes (UI guide section 8: write for the person, not the system). */
@@ -56,4 +56,24 @@ export const RUN_STATUS: Record<RunStatus, { label: string; className: string }>
 export const PAYMENT_RECORD_STATUS: Record<PaymentStatus, { label: string; className: string }> = {
   POSTED: { label: 'Posted', className: 'text-success' },
   REVERSED: { label: 'Reversed', className: 'text-muted' },
+}
+
+/** One item's kind, for a form or a table cell. */
+export const ITEM_KIND_ONE: Record<ItemKind, string> = {
+  RAW: 'Raw material',
+  PACKAGING: 'Packaging',
+  FG: 'Finished good',
+}
+
+export const CUSTOMER_TYPE: Record<CustomerType, string> = {
+  RETAILER: 'Retailer',
+  DISTRIBUTOR: 'Distributor',
+}
+
+/** Base units (factor 1, M8) with their names, for the item form. */
+export const BASE_UNIT: Record<string, string> = {
+  kg: 'kg (kilogram)',
+  L: 'L (litre)',
+  pc: 'pc (piece)',
+  pkt: 'pkt (packet)',
 }

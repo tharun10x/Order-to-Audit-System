@@ -7,10 +7,10 @@ import { fakeBackend, meRoute, renderApp } from '../test/renderApp'
 /** R2: the top bar shows only the pages a role can open. */
 describe('navigation per role', () => {
   it.each([
-    ['ADMIN', '/orders', ['Orders', 'Invoices', 'Payments', 'Purchases', 'Production', 'Stock']],
-    ['PRODUCTION', '/stock', ['Production runs', 'Purchases', 'Stock']],
-    ['AUDITOR', '/reports', ['Reports', 'Orders', 'Invoices', 'Payments', 'Purchases', 'Production', 'Stock']],
-    ['OWNER', '/reports', ['Reports', 'Orders', 'Invoices', 'Payments', 'Purchases', 'Production', 'Stock']],
+    ['ADMIN', '/orders', ['Orders', 'Invoices', 'Payments', 'Purchases', 'Production', 'Stock', 'Masters']],
+    ['PRODUCTION', '/stock', ['Production runs', 'Purchases', 'Stock', 'Masters']],
+    ['AUDITOR', '/reports', ['Reports', 'Orders', 'Invoices', 'Payments', 'Purchases', 'Production', 'Stock', 'Masters']],
+    ['OWNER', '/reports', ['Reports', 'Orders', 'Invoices', 'Payments', 'Purchases', 'Production', 'Stock', 'Masters']],
   ] as [Role, string, string[]][])('%s sees its own pages', async (role, path, pages) => {
     fakeBackend({ ...meRoute(role), 'GET /api/orders': [], 'GET /api/inventory/balances': [] })
     renderApp(path, role)

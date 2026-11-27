@@ -41,6 +41,10 @@ export interface Customer {
   phone: string | null
   /** true: same state as the factory, so CGST + SGST. false: IGST (R10.3). */
   intraState: boolean
+  /** Who looks after the customer (R2.2); null if nobody yet. */
+  salesmanId: number | null
+  salesmanName: string | null
+  active: boolean
 }
 
 export interface Product {
@@ -79,6 +83,8 @@ export interface Order {
   approvedAt: string | null
   /** Before GST; approved quantities once approved. */
   taxableValue: number
+  /** Both null until the order is invoiced. */
+  invoiceId: number | null
   invoiceNo: string | null
   lines: OrderLine[]
 }
@@ -239,11 +245,17 @@ export interface Supplier {
   name: string
   gstin: string | null
   stateCode: string | null
+  phone: string | null
+  active: boolean
 }
 
 export type ItemKind = 'RAW' | 'PACKAGING' | 'FG'
 
-/** units: what the item can be entered in, base unit first (R3.3, decided by the backend). */
+/**
+ * units: what the item can be entered in, base unit first (R3.3, decided by the backend). The finished-goods
+ * fields (R5.1) are null for raw materials and packaging. baseUnitLockReason says why the base unit can no longer
+ * change (M7: the item has moved or is in a recipe), null while it still can.
+ */
 export interface Item {
   code: string
   name: string
@@ -251,6 +263,14 @@ export interface Item {
   baseUnit: string
   units: string[]
   hasActiveBom: boolean
+  reorderLevel: number | null
+  hsnCode: string | null
+  gstRate: number | null
+  sellingPrice: number | null
+  packWeightKg: number | null
+  packetsPerCarton: number | null
+  active: boolean
+  baseUnitLockReason: string | null
 }
 
 // ---------------------------------------------------------------- purchases (R7)
@@ -380,4 +400,78 @@ export interface LedgerRow {
   runningQty: number
   runningValue: number
   remarks: string | null
+}
+
+// ---------------------------------------------------------------- masters (R5)
+
+/** ?status= on the master lists (M6). */
+export type MasterStatus = 'active' | 'inactive' | 'all'
+
+export type CustomerType = 'RETAILER' | 'DISTRIBUTOR'
+
+/** GET /api/salesmen: who a customer can be assigned to (M5). */
+export interface Salesman {
+  id: number
+  username: string
+  fullName: string
+}
+
+/**
+ * Body of POST /api/items and PUT /api/items/{code}. Decimals go as typed text, so the browser never rounds them.
+ * code and kind are fixed once created (M3); the finished-goods fields must be null for other kinds (M9).
+ */
+export interface ItemRequest {
+  code: string
+  name: string
+  kind: ItemKind
+  baseUnit: string
+  reorderLevel: string | null
+  hsnCode: string | null
+  gstRate: string | null
+  sellingPrice: string | null
+  packWeightKg: string | null
+  packetsPerCarton: number | null
+}
+
+export interface CustomerRequest {
+  code: string
+  name: string
+  type: CustomerType
+  stateCode: string
+  gstin: string | null
+  address: string | null
+  phone: string | null
+  salesmanId: number
+}
+
+export interface SupplierRequest {
+  name: string
+  stateCode: string | null
+  gstin: string | null
+  phone: string | null
+}
+
+export type BomLineKind = 'INGREDIENT' | 'PACKAGING'
+
+/** One recipe version (R5.6, R5.8): packets per batch and each item's quantity per batch, in its base unit. */
+export interface Bom {
+  id: number
+  productCode: string
+  productName: string
+  version: number
+  outputQty: number
+  active: boolean
+  createdAt: string
+  lines: { itemCode: string; itemName: string; lineKind: BomLineKind; qty: number; unit: string }[]
+}
+
+/**
+ * Body of POST /api/boms: a new, inactive version. copyIngredientsFrom (a product code) makes the server copy that
+ * product's active ingredient lines first (R5.10); lines add the rest, each in the unit chosen (R5.9).
+ */
+export interface BomRequest {
+  productCode: string
+  outputQty: string
+  copyIngredientsFrom: string | null
+  lines: { itemCode: string; qty: string; uomCode: string }[]
 }

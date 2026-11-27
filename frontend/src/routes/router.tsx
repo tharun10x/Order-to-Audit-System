@@ -9,6 +9,11 @@ import { ReportsPlaceholder } from '../features/auditor/ReportsPlaceholder'
 import { InvoiceDetailPage } from '../features/billing/InvoiceDetailPage'
 import { InvoicesPage } from '../features/billing/InvoicesPage'
 import { LoginPage } from '../features/login/LoginPage'
+import { CustomersPage } from '../features/masters/CustomersPage'
+import { ItemsPage } from '../features/masters/ItemsPage'
+import { MastersHome, MastersLayout } from '../features/masters/MastersLayout'
+import { RecipesPage } from '../features/masters/RecipesPage'
+import { SuppliersPage } from '../features/masters/SuppliersPage'
 import { OutstandingPage } from '../features/payments/OutstandingPage'
 import { PaymentsPage } from '../features/payments/PaymentsPage'
 import { RecordPaymentPage } from '../features/payments/RecordPaymentPage'
@@ -62,6 +67,25 @@ export const routes = [
       page('/stock', PAGE_ROLES.stock, <StockPage />),
       page('/stock/ledger/:itemCode', PAGE_ROLES.stock, <StockLedgerPage />),
       page('/reports', PAGE_ROLES.reports, <ReportsPlaceholder />),
+      {
+        // Every role that can open at least one masters list; each page then checks its own roles
+        element: (
+          <RequireRole roles={PAGE_ROLES.masterItems}>
+            <MastersLayout />
+          </RequireRole>
+        ),
+        children: [
+          page('/masters', PAGE_ROLES.masterItems, <MastersHome />),
+          page('/masters/items/new', PAGE_ROLES.manageMasters, <ItemsPage creating />),
+          page('/masters/items/:code?', PAGE_ROLES.masterItems, <ItemsPage />),
+          page('/masters/recipes/:productCode/new', PAGE_ROLES.manageMasters, <RecipesPage creating />),
+          page('/masters/recipes/:productCode?', PAGE_ROLES.masterRecipes, <RecipesPage />),
+          page('/masters/customers/new', PAGE_ROLES.manageMasters, <CustomersPage creating />),
+          page('/masters/customers/:customerId?', PAGE_ROLES.masterCustomers, <CustomersPage />),
+          page('/masters/suppliers/new', PAGE_ROLES.manageMasters, <SuppliersPage creating />),
+          page('/masters/suppliers/:supplierId?', PAGE_ROLES.masterSuppliers, <SuppliersPage />),
+        ],
+      },
     ],
   },
   { path: '*', element: <NotFound /> },
