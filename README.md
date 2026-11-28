@@ -7,7 +7,7 @@ Demo video: https://youtu.be/rr3DiN1A9N4
 > **Short version for evaluators**
 > - Every number in the section 5 benchmark matches the brief. Each one is checked by an automated test (see [Benchmark results](#benchmark-results)).
 > - Cost per packet is **₹31.14** (weighted average cost, with labour and gas charged to the run).
-> - One command starts the database, one starts the backend and one starts the frontend (not yet one Docker command for the whole stack). Test logins for all five roles are [below](#test-logins).
+> - One command runs the whole app from a fresh clone with only Docker installed: `docker compose up --build`, then open http://localhost:3000. Test logins for all five roles are [below](#test-logins).
 > - All nine benchmark steps run in the browser: login, salesman ordering on a phone, admin approval with the stock check, GST invoices with PDF download and sharing, dispatch, payments with outstanding and ageing, purchases, production runs with variances and cost per packet, stock balances with the ledger, and the month's reports with CSV, Excel and PDF downloads.
 > - The admin maintains master data on screen: items, versioned recipes (with copy-ingredients-from), customers and suppliers. Adding a 500 g pack takes a few minutes, without code changes ([walkthrough](#adding-a-new-pack-size-the-500-g-pack)).
 > - The owner has a one-screen dashboard (outstanding, today's orders, cost per packet, variance alerts, low stock), and each salesman has a *My sales* page for their own customers.
@@ -177,7 +177,7 @@ Raw materials, packaging and finished goods all sit in one `item` table, so they
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS, TanStack Query |
 | Documents | HTML-to-PDF for invoices and reports, Apache POI for Excel |
 | Tests | JUnit 5 + Testcontainers (a real Postgres), Vitest + Testing Library |
-| Running it | Docker Compose for the database, GitHub Actions runs the tests on every push |
+| Running it | Docker Compose (PostgreSQL, the backend, and nginx serving the frontend), GitHub Actions runs the tests on every push |
 
 **Why this stack.** Posting a production run has to change stock, costing and the audit log together, or not at all. A single Spring Boot application talking to one PostgreSQL database gives me that in one `@Transactional` method, and Postgres can enforce the ledger rules (check constraints, unique keys, row locks) as well. Money and quantities are `BigDecimal` in Java and `NUMERIC` in the database, so nothing drifts through floating-point rounding. React gives one codebase for the salesman's phone screen and the admin's desktop screen.
 
@@ -185,7 +185,47 @@ Raw materials, packaging and finished goods all sit in one `item` table, so they
 
 ## Installing and running it
 
-### What you need first
+### The whole app with one command
+
+All you need is Docker (Docker Desktop on Windows or macOS, running). From a terminal:
+
+```
+git clone https://github.com/tharun10x/Order-to-Audit-System.git && cd Order-to-Audit-System
+docker compose up --build
+# open http://localhost:3000
+```
+
+The first build takes a few minutes (Maven and npm download their libraries). When the log shows `Started OrderToAuditApplication` and the frontend container is up, open **http://localhost:3000** and log in:
+
+| Role | Username | Password |
+| --- | --- | --- |
+| Salesman (Retailer A) | `salesman_a` | `Sales@123` |
+| Salesman (Distributor B) | `salesman_b` | `Sales@123` |
+| Factory admin | `admin` | `Admin@123` |
+| Production supervisor | `production` | `Prod@123` |
+| Auditor (read-only) | `auditor` | `Audit@123` |
+| Owner (read-only) | `owner` | `Owner@123` |
+
+What runs:
+
+- **postgres:** PostgreSQL 17, with its data in a Docker volume. Port 5432 is also published, for the developer setup below.
+- **backend:** the Spring Boot app with the `dev` profile, which loads the benchmark seed and the test logins. That profile is for local evaluation only. The business date is fixed at **28 November 2026**, so the benchmark replays with the brief's dates; set `OTA_BUSINESS_DATE` to another date, or to empty for the real clock. Its port is not published.
+- **frontend:** nginx serving the built React app on port **3000** and passing `/api` to the backend, so the browser talks to one address.
+
+**To reset the data** to the seed (documents start again at `SO/2026-27/0001`, `INV/2026-27/0001` and so on):
+
+```
+docker compose down -v     # stops everything and deletes the database volume
+docker compose up --build
+```
+
+`Ctrl+C` or `docker compose down` (without `-v`) stops the app and keeps the data.
+
+### Developer setup
+
+To work on the code, run the database in Docker and the backend and frontend on your machine, so changes reload without rebuilding images.
+
+#### What you need first
 
 | Tool | Version | Check with |
 | --- | --- | --- |
@@ -198,24 +238,24 @@ You do **not** need to install Maven or PostgreSQL. The Maven wrapper (`mvnw`) d
 
 The commands below are for **Windows PowerShell**. On macOS or Linux, use `./mvnw` instead of `.\mvnw.cmd` and `export NAME=value` instead of `$env:NAME = "value"`.
 
-### Step 1: get the code
+#### Step 1: get the code
 
 ```powershell
 git clone <this-repository-url>
 cd <repository-folder>
 ```
 
-### Step 2: start the database
+#### Step 2: start the database
 
 Open Docker Desktop and wait until it says it is running. Then, from the repository root:
 
 ```powershell
-docker compose up -d
+docker compose up -d postgres
 ```
 
 This starts PostgreSQL 17 on port **5432** (database `order_to_audit`, user `ota`, password `ota`). Its data is kept in a Docker volume, so it survives a restart.
 
-### Step 3: start the backend
+#### Step 3: start the backend
 
 ```powershell
 cd backend
@@ -229,7 +269,7 @@ On first start, Flyway builds the whole schema and loads the benchmark master da
 
 > **Why set the business date?** The benchmark happens in November 2026. With `OTA_BUSINESS_DATE` set, the app treats that date as "today", so new orders, the default report period and the dashboard all fall in the benchmark month whatever your computer's clock says. The app logs a warning at startup to remind you the date is fixed. Leave it out to use the real date.
 
-### Step 4: start the frontend
+#### Step 4: start the frontend
 
 Open a **second** terminal:
 
@@ -243,18 +283,18 @@ Open **http://localhost:5173** and log in with one of the [test logins](#test-lo
 
 **On a real phone:** run `npm run dev -- --host` instead. Vite prints a network address such as `http://192.168.1.20:5173`. Open it on a phone connected to the same Wi-Fi and log in as `salesman_a`.
 
-### Starting again from a clean database
+#### Starting again from a clean database
 
 To get a database that is back to the seed data only (handy before recording a demo, so the documents start at `SO/2026-27/0001`, `INV/2026-27/0001` and so on):
 
 ```powershell
 docker compose down -v     # deletes the database volume and all data in it
-docker compose up -d
+docker compose up -d postgres
 ```
 
 Then start the backend again. It rebuilds the schema and the seed.
 
-### Running from an IDE
+#### Running from an IDE
 
 Set the active profile to `dev`, for example with the VM option `-Dspring.profiles.active=dev`. The app deliberately has **no default profile**: without one there is no signing key and no test data, so it refuses to start instead of quietly using demo settings. `spring-boot:run` already picks `dev` for you.
 
@@ -262,7 +302,8 @@ Set the active profile to `dev`, for example with the VM option `-Dspring.profil
 
 | What you see | What to do |
 | --- | --- |
-| `Connection refused` to port 5432 | Docker isn't running, or `docker compose up -d` wasn't run. Check with `docker ps`. |
+| `Connection refused` to port 5432 | Docker isn't running, or `docker compose up -d postgres` wasn't run. Check with `docker ps`. |
+| Port 3000 already in use (one-command setup) | Another program uses it. Stop it, or change `"3000:80"` in `docker-compose.yml`. |
 | Port 5432 already in use | Another PostgreSQL is running locally. Stop it, or change the port mapping in `docker-compose.yml` and set `DB_URL`. |
 | Backend stops at startup with a JWT secret error | No profile is active. Use `spring-boot:run`, or set the `dev` profile in your IDE. |
 | Tests fail with "Could not find a valid Docker environment" | The tests start their own Postgres through Docker. Start Docker Desktop first. |
@@ -500,7 +541,7 @@ GitHub Actions runs both suites on every push and pull request to `main` ([.gith
 ## Project structure
 
 ```
-├── docker-compose.yml           PostgreSQL 17 for development
+├── docker-compose.yml           the whole app (postgres, backend, frontend); `up -d postgres` for development
 ├── docs/
 │   ├── problem-statement.md     the official brief
 │   ├── design-note/
@@ -562,7 +603,7 @@ I would rather be upfront about these than have them found:
 - **Offline orders:** the server side is safe against duplicates, but there is no automatic background sync from the phone yet.
 - **GST summary** doesn't cover B2CL (large inter-state sales to unregistered buyers) or CDNUR. They don't occur in this business.
 - **Security limits:** no lock-out after repeated failed logins (they are logged), and no logout or token revocation. A token lasts 8 hours unless its user is deactivated.
-- **Not hosted, and not one Docker command.** Docker Compose starts only the database; the backend and frontend start separately with the commands above.
+- **Not hosted.** It runs locally with Docker Compose; there is no public deployment.
 - **Not built (stretch):** batch and expiry tracking, GPS check-in, Tally export, e-Invoice, Tamil interface.
 
 ---

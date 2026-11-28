@@ -1,0 +1,5 @@
+# Installed and built inside the image, never copied from the host
+node_modules/
+dist/
+.vite/
+*.log

@@ -1,3 +1,6 @@
+# The whole app: docker compose up --build, then open http://localhost:3000.
+# For development, `docker compose up -d postgres` starts only the database (port 5432) and the backend
+# and frontend run on the host as described in the README.
 services:
   postgres:
     image: postgres:17
@@ -15,6 +18,43 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  backend:
+    build: ./backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/order_to_audit
+      DB_USERNAME: ota
+      DB_PASSWORD: ota
+      # The dev profile loads the benchmark seed and the public test logins (A15).
+      # It is for local evaluation only: never run a real deployment with it.
+      SPRING_PROFILES_ACTIVE: dev
+      # Public development default, at least 32 bytes. Override with JWT_SECRET in the environment.
+      JWT_SECRET: ${JWT_SECRET:-compose-dev-only-jwt-secret-change-me-for-anything-real-0123456789}
+      # Business date (A17): the benchmark replays with the brief's November 2026 dates.
+      # Set OTA_BUSINESS_DATE to another date, or to empty (OTA_BUSINESS_DATE=) for the real clock.
+      OTA_BUSINESS_DATE: ${OTA_BUSINESS_DATE-2026-11-28}
+    # Not published: only nginx in the frontend container talks to it
+    expose:
+      - "8080"
+    healthcheck:
+      # No health endpoint and no curl in the image: any HTTP answer from the login URL
+      # (405 for a GET) means Flyway has finished and the server is up
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /api/auth/login HTTP/1.0\r\n\r\n' >&3 && head -n 1 <&3 | grep -q HTTP"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:80"
 
 volumes:
   ota-pgdata:
